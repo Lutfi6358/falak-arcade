@@ -4,244 +4,388 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Falak Arcade — Islamic Astronomy Mini-Game</title>
+
   <style>
     :root{
-      --bg:#0b1020;
-      --card:rgba(255,255,255,.06);
-      --card2:rgba(255,255,255,.04);
-      --border:rgba(255,255,255,.12);
-      --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.68);
-      --muted2:rgba(255,255,255,.55);
-      --good:rgba(16,185,129,.22);
-      --goodb:rgba(16,185,129,.40);
-      --warn:rgba(245,158,11,.20);
-      --warnb:rgba(245,158,11,.40);
-      --bad:rgba(244,63,94,.18);
-      --badb:rgba(244,63,94,.40);
-      --shadow: 0 18px 40px rgba(0,0,0,.35);
-      --r: 18px;
-      --r2: 14px;
+      --bg:#070a14;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.045);
+      --border: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.93);
+      --muted: rgba(255,255,255,.70);
+      --muted2: rgba(255,255,255,.55);
+
+      --good: rgba(16,185,129,.22);
+      --goodb: rgba(16,185,129,.45);
+      --warn: rgba(245,158,11,.20);
+      --warnb: rgba(245,158,11,.45);
+      --bad:  rgba(244,63,94,.18);
+      --badb: rgba(244,63,94,.45);
+
+      --shadow: 0 18px 55px rgba(0,0,0,.48);
+      --shadow2: 0 10px 22px rgba(0,0,0,.35);
+
+      --r: 22px;
+      --r2: 16px;
       --pad: 16px;
+
       --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
+
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
       font-family:var(--font);
-      background:
-        radial-gradient(1000px 700px at 20% -10%, rgba(99,102,241,.25), transparent 60%),
-        radial-gradient(900px 650px at 85% 0%, rgba(34,197,94,.20), transparent 55%),
-        radial-gradient(1100px 800px at 50% 120%, rgba(245,158,11,.16), transparent 55%),
-        var(--bg);
       color:var(--text);
-      min-height:100vh;
+      background: radial-gradient(1200px 700px at 12% -10%, rgba(99,102,241,.30), transparent 60%),
+                  radial-gradient(900px 700px at 88% 0%, rgba(34,197,94,.22), transparent 58%),
+                  radial-gradient(1200px 900px at 50% 120%, rgba(245,158,11,.18), transparent 58%),
+                  var(--bg);
+      overflow-x:hidden;
     }
-    a{color:inherit}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+
+    /* starfield canvas sits behind everything */
+    #starfield{
+      position:fixed; inset:0;
+      z-index:-2;
+    }
+    /* subtle vignette */
+    .vignette{
+      position:fixed; inset:-40px;
+      background: radial-gradient(circle at center, transparent 42%, rgba(0,0,0,.55) 100%);
+      z-index:-1;
+      pointer-events:none;
+      filter: blur(0px);
+    }
+
+    .wrap{max-width:1120px;margin:0 auto;padding:18px}
     @media (min-width:900px){ .wrap{padding:34px} }
 
-    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
-    .space{height:14px}
-    .title{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    /* GAME HEADER */
+    .topbar{
+      display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
       margin-bottom:14px;
     }
     .brand{display:flex;gap:12px;align-items:center}
     .logo{
-      width:44px;height:44px;border-radius:16px;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--border);
+      width:52px;height:52px;border-radius:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.18);
       display:grid;place-items:center;
-      box-shadow:var(--shadow);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
     }
-    .h1{font-size:22px;font-weight:650;letter-spacing:-.02em;line-height:1.1}
-    .sub{font-size:13px;color:var(--muted);margin-top:3px}
-    .card{
-      background:var(--card);
+    .logo::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: conic-gradient(from 180deg, rgba(99,102,241,.0), rgba(99,102,241,.35), rgba(34,197,94,.25), rgba(245,158,11,.22), rgba(99,102,241,.0));
+      animation: spin 9s linear infinite;
+      opacity:.35;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .logo span{position:relative; z-index:1; font-size:22px}
+
+    .h1{font-size:22px;font-weight:780;letter-spacing:-.03em;line-height:1.05}
+    .sub{font-size:13px;color:var(--muted);margin-top:4px;max-width:680px}
+
+    .hud{
+      display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end
+    }
+
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
       border:1px solid var(--border);
-      border-radius:var(--r);
-      box-shadow:var(--shadow);
+      padding:5px 10px;border-radius:999px;
+      font-size:12px;color:var(--text);
+      background:rgba(255,255,255,.07);
+      box-shadow: var(--shadow2);
+      white-space:nowrap;
     }
-    .card2{
-      background:var(--card2);
-      border:1px solid var(--border);
-      border-radius:var(--r);
+    .badge.good{background:var(--good);border-color:var(--goodb)}
+    .badge.warn{background:var(--warn);border-color:var(--warnb)}
+    .badge.bad {background:var(--bad); border-color:var(--badb)}
+
+    .progress{
+      width:180px;height:12px;border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.15);
+      overflow:hidden;
+      box-shadow: var(--shadow2);
+      position:relative;
     }
-    .pad{padding:var(--pad)}
-    .head{padding:16px 16px 10px 16px}
-    .head h2{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em}
-    .head p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(255,255,255,.92), rgba(255,255,255,.55));
+      filter: drop-shadow(0 0 10px rgba(255,255,255,.15));
+    }
+    .xpmeta{font-size:12px;color:var(--muted)}
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.045));
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panelHead{
+      padding:16px 16px 10px 16px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      background: rgba(0,0,0,.10);
+    }
+    .panelHead h2{margin:0;font-size:15px;font-weight:760;letter-spacing:-.02em}
+    .panelHead p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+    .panelBody{padding:16px}
+
+    /* tabs look more game-like */
     .tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     @media(min-width:900px){ .tabs{grid-template-columns:repeat(4,1fr)} }
     .tab{
-      padding:10px 12px;border-radius:14px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.05);
+      padding:11px 12px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
       color:var(--muted);
       font-size:13px;
       cursor:pointer;
       display:flex;gap:8px;align-items:center;justify-content:center;
       user-select:none;
-      transition:.15s transform, .15s background, .15s color;
+      transition:.14s transform, .14s background, .14s color, .14s box-shadow;
+      box-shadow: 0 6px 18px rgba(0,0,0,.20);
     }
-    .tab:hover{transform:translateY(-1px);background:rgba(255,255,255,.08);color:var(--text)}
-    .tab.active{background:rgba(255,255,255,.12);color:var(--text);border-color:rgba(255,255,255,.18)}
-    .content{padding:16px}
+    .tab:hover{
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.09);
+      color:var(--text);
+      box-shadow: 0 12px 24px rgba(0,0,0,.28);
+    }
+    .tab.active{
+      background:rgba(255,255,255,.13);
+      color:var(--text);
+      border-color:rgba(255,255,255,.22);
+      box-shadow: 0 14px 30px rgba(0,0,0,.33);
+    }
+
     .grid{display:grid;gap:14px}
     @media(min-width:900px){ .grid-3{grid-template-columns:1fr 1fr 1fr} .grid-2{grid-template-columns:1fr 1fr} }
     .colspan2{grid-column:1/-1}
     @media(min-width:900px){ .colspan2{grid-column:2/4} }
 
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,.20);
-      padding:8px 10px;border-radius:999px;
-      font-size:12px;color:var(--muted);
+    .card{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:var(--r2);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
     }
-    .badge{
-      display:inline-flex;align-items:center;justify-content:center;
-      border:1px solid var(--border);
-      padding:4px 10px;border-radius:999px;
-      font-size:12px;color:var(--text);
-      background:rgba(255,255,255,.06);
-      white-space:nowrap;
-    }
-    .badge.good{background:var(--good);border-color:var(--goodb)}
-    .badge.warn{background:var(--warn);border-color:var(--warnb)}
-    .badge.bad{background:var(--bad);border-color:var(--badb)}
-    .muted{color:var(--muted)}
-    .muted2{color:var(--muted2)}
-    .hr{height:1px;background:var(--border);margin:12px 0}
+    .cardHead{padding:14px 14px 10px 14px}
+    .cardHead h3{margin:0;font-size:13px;font-weight:760;letter-spacing:-.02em}
+    .cardHead p{margin:6px 0 0 0;color:var(--muted);font-size:12px}
+    .cardBody{padding:14px}
+
     .btn{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.09);
       color:var(--text);
-      border-radius:14px;
-      padding:10px 12px;
+      border-radius:16px;
+      padding:11px 12px;
       font-size:13px;
       cursor:pointer;
-      transition:.15s transform, .15s background;
+      transition:.14s transform, .14s background, .14s box-shadow;
       user-select:none;
+      box-shadow: 0 10px 18px rgba(0,0,0,.22);
     }
-    .btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.12)}
-    .btn.secondary{background:rgba(0,0,0,.24)}
+    .btn:hover{
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.13);
+      box-shadow: 0 16px 28px rgba(0,0,0,.30);
+    }
+    .btn:active{transform:translateY(0px) scale(.99)}
+    .btn.secondary{background:rgba(0,0,0,.25)}
     .btn.full{width:100%}
     .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .mini{
-      font-size:12px;color:var(--muted2)
-    }
+
+    .mini{font-size:12px;color:var(--muted2)}
+    .muted{color:var(--muted)}
+    .muted2{color:var(--muted2)}
+    .hr{height:1px;background:rgba(255,255,255,.14);margin:12px 0}
 
     .control{margin:10px 0 14px}
     .control .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-    .control label{font-size:13px;font-weight:600}
+    .control label{font-size:13px;font-weight:720}
     input[type="range"]{width:100%}
     .rangehint{display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-top:4px}
 
     .toggle{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       padding:12px;border-radius:16px;
-      border:1px solid var(--border);
+      border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.05);
     }
-    .toggle .t1{font-size:13px;font-weight:650}
+    .toggle .t1{font-size:13px;font-weight:760}
     .toggle .t2{font-size:12px;color:var(--muted)}
     .switch{
-      width:44px;height:26px;border-radius:999px;
+      width:48px;height:28px;border-radius:999px;
       background:rgba(255,255,255,.10);
-      border:1px solid var(--border);
+      border:1px solid rgba(255,255,255,.16);
       position:relative;cursor:pointer;flex:0 0 auto;
-      transition:.15s background;
+      transition:.14s background, .14s border-color;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
     }
     .switch::after{
       content:"";position:absolute;top:3px;left:3px;
-      width:18px;height:18px;border-radius:50%;
-      background:rgba(255,255,255,.85);
-      transition:.15s transform;
+      width:20px;height:20px;border-radius:50%;
+      background:rgba(255,255,255,.88);
+      transition:.14s transform;
+      box-shadow: 0 8px 12px rgba(0,0,0,.25);
     }
     .switch.on{background:rgba(16,185,129,.25);border-color:rgba(16,185,129,.45)}
-    .switch.on::after{transform:translateX(18px)}
+    .switch.on::after{transform:translateX(20px)}
 
     .note{
       display:flex;gap:10px;align-items:flex-start;
       padding:12px;border-radius:16px;
-      border:1px solid var(--border);
+      border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.05);
       color:var(--muted);
       font-size:13px;
     }
     .dot{
       width:10px;height:10px;border-radius:50%;
-      background:rgba(255,255,255,.40);
+      background:rgba(255,255,255,.50);
       margin-top:4px;flex:0 0 auto;
+      box-shadow: 0 0 14px rgba(255,255,255,.12);
     }
 
     .list{display:flex;flex-direction:column;gap:10px}
     .item{
       padding:12px;border-radius:16px;
-      border:1px solid var(--border);
+      border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.05);
-    }
-    .item .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .item .t{font-size:13px;font-weight:650}
-    .item .s{font-size:12px;color:var(--muted);margin-top:6px}
-    .stars{font-size:12px;color:rgba(255,255,255,.75)}
-    .progress{
-      width:170px;height:10px;border-radius:999px;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--border);
+      box-shadow: var(--shadow2);
+      position:relative;
       overflow:hidden;
     }
-    .bar{height:100%;background:rgba(255,255,255,.65);width:0%}
-    .xpmeta{font-size:12px;color:var(--muted)}
-    .select, .text, .textarea{
+    .item .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .item .t{font-size:13px;font-weight:760}
+    .item .s{font-size:12px;color:var(--muted);margin-top:6px}
+    .stars{font-size:12px;color:rgba(255,255,255,.78)}
+
+    .select, .text{
       width:100%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--border);
+      padding:11px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
       background:rgba(0,0,0,.22);
       color:var(--text);
       outline:none;
       font-size:13px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
     }
-    .textarea{min-height:84px;resize:vertical}
-    .quizopt{cursor:pointer;transition:.15s;background:rgba(255,255,255,.05)}
-    .quizopt:hover{background:rgba(255,255,255,.09)}
-    .quizopt.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22)}
-    .feedback{padding:12px;border-radius:16px;border:1px solid var(--border)}
+
+    .quizopt{cursor:pointer;transition:.14s background, .14s transform}
+    .quizopt:hover{background:rgba(255,255,255,.09);transform:translateY(-1px)}
+    .quizopt.active{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.22)}
+
+    .feedback{padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.14);box-shadow:var(--shadow2)}
     .feedback.good{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.35)}
-    .feedback.bad{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.35)}
+    .feedback.bad {background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.35)}
+
+    /* little “game” animations */
+    .pop{animation: pop .22s ease-out}
+    @keyframes pop{
+      0%{transform:scale(.96)}
+      100%{transform:scale(1)}
+    }
+    .shake{animation: shake .35s ease-in-out}
+    @keyframes shake{
+      0%{transform:translateX(0)}
+      25%{transform:translateX(-5px)}
+      50%{transform:translateX(5px)}
+      75%{transform:translateX(-3px)}
+      100%{transform:translateX(0)}
+    }
+
+    /* top-right small controls */
+    .hudBtn{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.25);
+      padding:7px 10px;border-radius:999px;
+      font-size:12px;color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      box-shadow: var(--shadow2);
+      transition:.14s transform,.14s background;
+    }
+    .hudBtn:hover{transform:translateY(-1px);background:rgba(255,255,255,.09)}
+    .hudBtn .tinySwitch{
+      width:36px;height:20px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.09);
+      position:relative;
+    }
+    .hudBtn .tinySwitch::after{
+      content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+      background:rgba(255,255,255,.85);
+      transition:.14s transform;
+    }
+    .hudBtn.on .tinySwitch{background:rgba(16,185,129,.22);border-color:rgba(16,185,129,.45)}
+    .hudBtn.on .tinySwitch::after{transform:translateX(16px)}
+
+    /* confetti canvas (front layer) */
+    #fx{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:50;
+    }
+
+    /* footer */
     .footer{padding:14px 16px}
   </style>
 </head>
+
 <body>
+  <canvas id="starfield"></canvas>
+  <div class="vignette"></div>
+  <canvas id="fx"></canvas>
+
   <div class="wrap">
-    <div class="title">
+    <div class="topbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true">🌙</div>
+        <div class="logo" aria-hidden="true"><span>🌙</span></div>
         <div>
           <div class="h1">Falak Arcade</div>
-          <div class="sub">Islamic astronomy mini-game (educational simulation — not official criteria)</div>
+          <div class="sub">Play & learn: hilal visibility intuition, Qibla bearings, high-latitude prayer time rules, and quiz challenges.</div>
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <div class="hud">
+        <div class="hudBtn on" id="soundToggle" title="Toggle sound effects">
+          🔊 Sound
+          <div class="tinySwitch" aria-hidden="true"></div>
+        </div>
+
         <span class="badge" id="levelBadge">Level 1</span>
-        <div class="progress" title="XP progress to next level">
+        <div class="progress" title="XP progress">
           <div class="bar" id="xpBar"></div>
         </div>
         <span class="xpmeta" id="xpMeta">0/120 XP</span>
       </div>
     </div>
 
-    <div class="card">
-      <div class="head">
-        <h2>Choose a mode</h2>
-        <p>Use local religious authority / official timetables for real rulings and decisions.</p>
+    <div class="panel">
+      <div class="panelHead">
+        <div>
+          <h2>Choose a mode</h2>
+          <p>Educational simulation only — use official authorities/timetables for real decisions.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+          <span class="badge" id="dailySeed">Daily seed</span>
+        </div>
       </div>
 
-      <div class="content">
+      <div class="panelBody">
         <div class="tabs">
           <div class="tab active" data-tab="hilal">🔭 Hilal Hunt</div>
           <div class="tab" data-tab="qibla">🧭 Qibla Quest</div>
@@ -249,20 +393,19 @@
           <div class="tab" data-tab="quiz">📘 Quick Quiz</div>
         </div>
 
-        <div class="space"></div>
+        <div style="height:14px"></div>
 
         <!-- HILAL -->
         <section id="panel-hilal">
           <div class="grid grid-3">
-            <div class="card2">
-              <div class="head">
-                <h2>Setup</h2>
+            <div class="card">
+              <div class="cardHead">
+                <h3>Setup</h3>
                 <p>Adjust parameters and decide: Seen / Not seen.</p>
               </div>
-              <div class="pad">
-
+              <div class="cardBody">
                 <button class="btn secondary full" id="btnRandomHilal">⚡ Random case</button>
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="control">
                   <div class="top">
@@ -271,7 +414,7 @@
                   </div>
                   <input id="altRange" type="range" min="-0.5" max="12" step="0.1" value="2.2">
                   <div class="rangehint"><span>-0.5</span><span>12</span></div>
-                  <div class="mini muted2">Higher altitude generally improves chances.</div>
+                  <div class="mini">Higher altitude generally improves chances.</div>
                 </div>
 
                 <div class="control">
@@ -281,7 +424,7 @@
                   </div>
                   <input id="elongRange" type="range" min="0" max="18" step="0.1" value="7.0">
                   <div class="rangehint"><span>0</span><span>18</span></div>
-                  <div class="mini muted2">Wider separation from the Sun helps visibility.</div>
+                  <div class="mini">Wider separation from the Sun helps visibility.</div>
                 </div>
 
                 <div class="control">
@@ -291,7 +434,7 @@
                   </div>
                   <input id="ageRange" type="range" min="0" max="30" step="1" value="16">
                   <div class="rangehint"><span>0</span><span>30</span></div>
-                  <div class="mini muted2">Older crescents tend to be easier (simplified).</div>
+                  <div class="mini">Older crescents tend to be easier (simplified).</div>
                 </div>
 
                 <div class="control">
@@ -301,7 +444,7 @@
                   </div>
                   <input id="widthRange" type="range" min="0" max="0.6" step="0.01" value="0.12">
                   <div class="rangehint"><span>0</span><span>0.6</span></div>
-                  <div class="mini muted2">Thicker crescents are usually brighter.</div>
+                  <div class="mini">Thicker crescents are usually brighter.</div>
                 </div>
 
                 <div class="toggle">
@@ -312,7 +455,7 @@
                   <div class="switch" id="hazeSwitch" role="switch" aria-checked="false" tabindex="0"></div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="toggle">
                   <div>
@@ -322,7 +465,7 @@
                   <div class="switch" id="cloudSwitch" role="switch" aria-checked="false" tabindex="0"></div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="btnrow">
                   <button class="btn full" id="btnSeen">✅ Seen</button>
@@ -331,52 +474,52 @@
               </div>
             </div>
 
-            <div class="card2 colspan2">
-              <div class="head">
+            <div class="card colspan2">
+              <div class="cardHead">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-                  <h2>Analysis</h2>
-                  <span class="badge" id="hilalVerdictBadge">Uncertain</span>
+                  <h3>Analysis</h3>
+                  <span class="badge warn" id="hilalVerdictBadge">Uncertain</span>
                 </div>
-                <p>Educational visibility score: <span id="scorePct">0</span> / 100</p>
+                <p>Educational visibility score: <b><span id="scorePct">0</span></b> / 100</p>
               </div>
-              <div class="pad">
+              <div class="cardBody">
                 <div class="note">
                   <div class="dot"></div>
                   <div>
-                    <div style="font-weight:650;color:var(--text);margin-bottom:6px">How to think about it</div>
-                    <ul style="margin:0;padding-left:18px;line-height:1.5">
-                      <li>Altitude + elongation shape the geometry near sunset.</li>
-                      <li>Age + width relate to illumination/brightness (simplified).</li>
+                    <div style="font-weight:760;color:var(--text);margin-bottom:6px">How to think about it</div>
+                    <ul style="margin:0;padding-left:18px;line-height:1.55">
+                      <li>Altitude + elongation set the geometry near sunset.</li>
+                      <li>Age + width relate to brightness (simplified).</li>
                       <li>Haze/clouds can dominate real outcomes even with good geometry.</li>
                     </ul>
                   </div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="grid grid-2">
-                  <div class="card2">
-                    <div class="head">
-                      <h2>Your recent attempts</h2>
-                      <p>Learn patterns to earn more XP.</p>
+                  <div class="card">
+                    <div class="cardHead">
+                      <h3>Your recent attempts</h3>
+                      <p>Patterns → XP. Try extreme cases too.</p>
                     </div>
-                    <div class="pad">
+                    <div class="cardBody">
                       <div class="list" id="hilalLog"></div>
-                      <div class="mini muted2" id="hilalEmpty">No attempts yet. Try a case and decide.</div>
+                      <div class="mini" id="hilalEmpty">No attempts yet. Try a case and decide.</div>
                     </div>
                   </div>
 
-                  <div class="card2">
-                    <div class="head">
-                      <h2>Mini goals</h2>
-                      <p>Try these to master the concept.</p>
+                  <div class="card">
+                    <div class="cardHead">
+                      <h3>Mini quests</h3>
+                      <p>Small missions to make it feel like a game.</p>
                     </div>
-                    <div class="pad">
+                    <div class="cardBody">
                       <div class="list">
-                        <div class="note"><div class="dot"></div><div>Create a “likely visible” case without haze/clouds.</div></div>
+                        <div class="note"><div class="dot"></div><div>Create a “Likely visible” case without haze/clouds.</div></div>
                         <div class="note"><div class="dot"></div><div>Turn on haze and observe how the verdict changes.</div></div>
                         <div class="note"><div class="dot"></div><div>Keep geometry the same, increase width—what happens?</div></div>
-                        <div class="note"><div class="dot"></div><div>Find a case where the verdict is “Uncertain”.</div></div>
+                        <div class="note"><div class="dot"></div><div>Find a case where verdict is “Uncertain”.</div></div>
                       </div>
                     </div>
                   </div>
@@ -384,79 +527,78 @@
 
               </div>
             </div>
+
           </div>
         </section>
 
         <!-- QIBLA -->
         <section id="panel-qibla" style="display:none">
           <div class="grid grid-3">
-            <div class="card2">
-              <div class="head">
+            <div class="card">
+              <div class="cardHead">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-                  <h2>Target city</h2>
+                  <h3>Target city</h3>
                   <button class="btn secondary" id="btnNextCity">🔁 Change</button>
                 </div>
-                <p>Estimate Qibla bearing (0–359°).</p>
+                <p>Try to land within 6° for ★★★.</p>
               </div>
-              <div class="pad">
-                <div class="item">
+              <div class="cardBody">
+                <div class="item pop">
                   <div class="t" id="qCity">Kuala Lumpur</div>
                   <div class="s" id="qTip">Tip...</div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="control">
                   <div class="top">
-                    <label for="bearingRange">Your guess</label>
+                    <label for="bearingRange">Your bearing</label>
                     <span class="badge" id="bearingVal">0°</span>
                   </div>
                   <input id="bearingRange" type="range" min="0" max="359" step="1" value="0">
-                  <div class="mini muted2">0°=North, 90°=East, 180°=South, 270°=West</div>
+                  <div class="mini">0°=North, 90°=East, 180°=South, 270°=West</div>
                 </div>
 
-                <button class="btn full" id="btnSubmitQibla">🧭 Submit bearing</button>
+                <button class="btn full" id="btnSubmitQibla">🧭 Submit</button>
               </div>
             </div>
 
-            <div class="card2 colspan2">
-              <div class="head">
-                <h2>Results & learning</h2>
-                <p>Closer guesses earn more stars and XP.</p>
+            <div class="card colspan2">
+              <div class="cardHead">
+                <h3>Results & learning</h3>
+                <p>More accuracy → more stars → more XP.</p>
               </div>
-              <div class="pad">
+              <div class="cardBody">
                 <div class="note">
                   <div class="dot"></div>
-                  <div>
-                    <div style="font-weight:650;color:var(--text);margin-bottom:6px">Real-world note</div>
-                    <div>Accurate Qibla uses great-circle direction (geodesy). This game uses simplified bearings for intuition.</div>
-                  </div>
+                  <div><b style="color:var(--text)">Real-world note:</b> Accurate Qibla uses great-circle direction (geodesy). This is simplified for intuition.</div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="grid grid-2">
-                  <div class="card2">
-                    <div class="head">
-                      <h2>Recent attempts</h2>
-                      <p>Try to get 3 stars (≤ 6° error).</p>
+                  <div class="card">
+                    <div class="cardHead">
+                      <h3>Recent attempts</h3>
+                      <p>Keep improving your ★ score.</p>
                     </div>
-                    <div class="pad">
+                    <div class="cardBody">
                       <div class="list" id="qiblaLog"></div>
-                      <div class="mini muted2" id="qiblaEmpty">No attempts yet.</div>
+                      <div class="mini" id="qiblaEmpty">No attempts yet.</div>
                     </div>
                   </div>
-                  <div class="card2">
-                    <div class="head">
-                      <h2>Practice ideas</h2>
-                      <p>Multiple perspectives for learning.</p>
+
+                  <div class="card">
+                    <div class="cardHead">
+                      <h3>Challenge goals</h3>
+                      <p>Different approaches to master it.</p>
                     </div>
-                    <div class="pad">
+                    <div class="cardBody">
                       <div class="list">
-                        <div class="note"><div class="dot"></div><div>Compare regions: UK vs Malaysia vs Japan.</div></div>
-                        <div class="note"><div class="dot"></div><div>Explain why a sphere needs great-circle paths.</div></div>
-                        <div class="note"><div class="dot"></div><div>Relate compass bearings to map orientation.</div></div>
-                        <div class="note"><div class="dot"></div><div>Discuss local magnetic declination (real compass use).</div></div>
+                        <div class="note"><div class="dot"></div><div>Get ★★★ twice in a row.</div></div>
+                        <div class="note"><div class="dot"></div><div>Compare UK vs Malaysia directions — explain why.</div></div>
+                        <div class="note"><div class="dot"></div><div>Explain “great-circle” in one sentence.</div></div>
+                        <div class="note"><div class="dot"></div><div>Relate compass bearings to map rotation.</div></div>
                       </div>
                     </div>
                   </div>
@@ -464,125 +606,125 @@
 
               </div>
             </div>
+
           </div>
         </section>
 
         <!-- PRAYER -->
         <section id="panel-prayer" style="display:none">
           <div class="grid grid-3">
-            <div class="card2">
-              <div class="head">
-                <h2>Scenario</h2>
+            <div class="card">
+              <div class="cardHead">
+                <h3>Scenario</h3>
                 <p>Pick a case and choose a method.</p>
               </div>
-              <div class="pad">
-                <div class="mini muted2" style="margin-bottom:8px">Choose scenario</div>
+              <div class="cardBody">
+                <div class="mini" style="margin-bottom:8px">Choose scenario</div>
                 <div class="list" id="scenarioList"></div>
 
                 <div class="hr"></div>
 
-                <div class="mini muted2" style="margin-bottom:8px">Choose method</div>
+                <div class="mini" style="margin-bottom:8px">Choose method</div>
                 <select class="select" id="methodSelect"></select>
-                <div class="mini muted2" id="methodDetail" style="margin-top:8px"></div>
+                <div class="mini" id="methodDetail" style="margin-top:8px"></div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
                 <button class="btn full" id="btnSubmitPrayer">⏱️ Submit method</button>
               </div>
             </div>
 
-            <div class="card2 colspan2">
-              <div class="head">
-                <h2>Feedback</h2>
+            <div class="card colspan2">
+              <div class="cardHead">
+                <h3>Feedback</h3>
                 <p>Different councils can apply different rules — this is a learning game.</p>
               </div>
-              <div class="pad">
+              <div class="cardBody">
 
                 <div class="note" id="scenarioHintBox">
                   <div class="dot"></div>
                   <div>
-                    <div style="font-weight:650;color:var(--text);margin-bottom:6px">Hint</div>
+                    <div style="font-weight:760;color:var(--text);margin-bottom:6px">Hint</div>
                     <div id="scenarioHint">...</div>
                   </div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="grid grid-2">
-                  <div class="card2">
-                    <div class="head">
-                      <h2>Commonly acceptable choices (in this game)</h2>
+                  <div class="card">
+                    <div class="cardHead">
+                      <h3>Acceptable (in this game)</h3>
                       <p>Use local authority for real practice.</p>
                     </div>
-                    <div class="pad">
+                    <div class="cardBody">
                       <div style="display:flex;flex-wrap:wrap;gap:8px" id="acceptableBadges"></div>
-                      <div class="mini muted2" style="margin-top:10px">
-                        Real implementations depend on fiqh positions and local authority decisions.
-                      </div>
+                      <div class="mini" style="margin-top:10px">Real implementations depend on fiqh positions and authority decisions.</div>
                     </div>
                   </div>
 
-                  <div class="card2">
-                    <div class="head">
-                      <h2>Your recent picks</h2>
-                      <p>Track what works in each scenario.</p>
+                  <div class="card">
+                    <div class="cardHead">
+                      <h3>Your recent picks</h3>
+                      <p>Track what works per scenario.</p>
                     </div>
-                    <div class="pad">
+                    <div class="cardBody">
                       <div class="list" id="prayerLog"></div>
-                      <div class="mini muted2" id="prayerEmpty">No submissions yet.</div>
+                      <div class="mini" id="prayerEmpty">No submissions yet.</div>
                     </div>
                   </div>
                 </div>
 
               </div>
             </div>
+
           </div>
         </section>
 
         <!-- QUIZ -->
         <section id="panel-quiz" style="display:none">
           <div class="grid grid-3">
-            <div class="card2">
-              <div class="head">
+            <div class="card">
+              <div class="cardHead">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-                  <h2>Question</h2>
+                  <h3>Question</h3>
                   <span class="badge" id="quizTag">Hilal</span>
                 </div>
-                <p>Streak: <span id="quizStreak">0</span></p>
+                <p>Streak: <b><span id="quizStreak">0</span></b></p>
               </div>
-              <div class="pad">
-                <div class="item">
+              <div class="cardBody">
+                <div class="item" id="quizQWrap">
                   <div class="t" id="quizQ">...</div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="list" id="quizOptions"></div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="btnrow">
                   <button class="btn full" id="btnQuizSubmit">Submit</button>
                   <button class="btn secondary full" id="btnQuizNext">Next</button>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
                 <div id="quizFeedback"></div>
               </div>
             </div>
 
-            <div class="card2 colspan2">
-              <div class="head">
-                <h2>Build your own set</h2>
+            <div class="card colspan2">
+              <div class="cardHead">
+                <h3>Build your own set</h3>
                 <p>Add questions for your class, workshop, or journal club.</p>
               </div>
-              <div class="pad">
+              <div class="cardBody">
                 <div class="grid grid-2" style="margin-bottom:10px">
                   <div>
-                    <div class="mini muted2" style="margin-bottom:6px">Question</div>
+                    <div class="mini" style="margin-bottom:6px">Question</div>
                     <input class="text" id="qbQ" placeholder="Write a question about falak..." />
                   </div>
                   <div>
-                    <div class="mini muted2" style="margin-bottom:6px">Tag</div>
+                    <div class="mini" style="margin-bottom:6px">Tag</div>
                     <input class="text" id="qbTag" placeholder="Hilal / Qibla / Prayer Times" value="Custom"/>
                   </div>
                 </div>
@@ -594,11 +736,11 @@
                   <input class="text" id="qbD" placeholder="Option D" />
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
 
                 <div class="grid grid-2">
                   <div>
-                    <div class="mini muted2" style="margin-bottom:6px">Correct answer</div>
+                    <div class="mini" style="margin-bottom:6px">Correct answer</div>
                     <select class="select" id="qbAns">
                       <option value="0">A</option>
                       <option value="1" selected>B</option>
@@ -607,20 +749,19 @@
                     </select>
                   </div>
                   <div>
-                    <div class="mini muted2" style="margin-bottom:6px">Explanation (optional)</div>
+                    <div class="mini" style="margin-bottom:6px">Explanation (optional)</div>
                     <input class="text" id="qbWhy" placeholder="Why is that the correct answer?" />
                   </div>
                 </div>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
                 <button class="btn" id="btnAddQuestion">➕ Add question (+10 XP)</button>
 
-                <div class="space"></div>
+                <div style="height:12px"></div>
                 <div class="note">
                   <div class="dot"></div>
                   <div>Tip: tailor questions to rukyah, fiqh, image processing, light pollution, or your HORTOH workflow.</div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -629,13 +770,13 @@
       </div>
     </div>
 
-    <div class="space"></div>
+    <div style="height:14px"></div>
 
-    <div class="card">
+    <div class="panel">
       <div class="footer">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <div>
-            <div style="font-size:13px;font-weight:650">Your progress</div>
+            <div style="font-size:13px;font-weight:760">Your progress</div>
             <div class="mini muted">Total XP: <span id="totalXp">0</span> • Level <span id="totalLevel">1</span></div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px">
@@ -653,7 +794,7 @@
 <script>
 /* ===========================
    Falak Arcade — Vanilla JS
-   Educational simulation only
+   + game feel + sound effects
    =========================== */
 
 // ---------- Helpers ----------
@@ -669,8 +810,185 @@ function seededRng(seed){
   let s = seed>>>0;
   return ()=>{ s=(1664525*s + 1013904223)>>>0; return s/4294967296; };
 }
-const rng = seededRng(todaySeed());
+const SEED = todaySeed();
+const rng = seededRng(SEED);
+document.getElementById("dailySeed").textContent = `Daily seed: ${SEED}`;
 
+// ---------- Sound (no external files) ----------
+let soundOn = true;
+let audioCtx = null;
+
+function ensureAudio(){
+  if(!soundOn) return null;
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone({freq=440, type="sine", duration=0.08, gain=0.06, ramp=0.012}){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+
+  const t = ctx.currentTime;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + ramp);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+  o.connect(g);
+  g.connect(ctx.destination);
+
+  o.start(t);
+  o.stop(t + duration + 0.02);
+}
+
+function sfxClick(){ playTone({freq:520, type:"triangle", duration:0.06, gain:0.05}); }
+function sfxToggle(){ playTone({freq:350, type:"square", duration:0.05, gain:0.035}); }
+function sfxSuccess(){
+  playTone({freq:523.25, type:"sine", duration:0.08, gain:0.06});
+  setTimeout(()=>playTone({freq:659.25, type:"sine", duration:0.10, gain:0.06}), 70);
+}
+function sfxFail(){
+  playTone({freq:220, type:"sawtooth", duration:0.10, gain:0.05});
+  setTimeout(()=>playTone({freq:185, type:"sawtooth", duration:0.10, gain:0.05}), 70);
+}
+function sfxLevelUp(){
+  playTone({freq:440, type:"sine", duration:0.10, gain:0.06});
+  setTimeout(()=>playTone({freq:660, type:"sine", duration:0.12, gain:0.06}), 110);
+  setTimeout(()=>playTone({freq:880, type:"sine", duration:0.14, gain:0.06}), 240);
+}
+
+// sound toggle
+const soundToggle = document.getElementById("soundToggle");
+soundToggle.addEventListener("click", ()=>{
+  soundOn = !soundOn;
+  soundToggle.classList.toggle("on", soundOn);
+  soundToggle.innerHTML = `${soundOn ? "🔊" : "🔇"} Sound <div class="tinySwitch" aria-hidden="true"></div>`;
+  sfxToggle();
+});
+
+// Make first user interaction resume audio on some browsers:
+document.addEventListener("pointerdown", ()=>ensureAudio(), {once:true});
+
+// ---------- FX (confetti / sparkle burst) ----------
+const fxCanvas = document.getElementById("fx");
+const fxCtx = fxCanvas.getContext("2d");
+let fxW=0, fxH=0;
+function resizeFx(){ fxW=fxCanvas.width=window.innerWidth; fxH=fxCanvas.height=window.innerHeight; }
+window.addEventListener("resize", resizeFx);
+resizeFx();
+
+const particles = [];
+function burst(x,y, kind="good"){
+  const n = 26;
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp = 1.6 + Math.random()*4.0;
+    particles.push({
+      x, y,
+      vx: Math.cos(a)*sp,
+      vy: Math.sin(a)*sp - (1.5 + Math.random()*1.8),
+      life: 55 + Math.random()*25,
+      size: 2 + Math.random()*3,
+      kind,
+      rot: Math.random()*Math.PI*2,
+      vr: (Math.random()-0.5)*0.25
+    });
+  }
+}
+function fxTick(){
+  fxCtx.clearRect(0,0,fxW,fxH);
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.life -= 1;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.09; // gravity
+    p.vx *= 0.985;
+    p.vy *= 0.985;
+    p.rot += p.vr;
+
+    const alpha = Math.max(0, Math.min(1, p.life/70));
+    fxCtx.save();
+    fxCtx.translate(p.x, p.y);
+    fxCtx.rotate(p.rot);
+    fxCtx.globalAlpha = alpha;
+
+    if(p.kind==="good"){
+      fxCtx.fillStyle = "rgba(180,255,225,0.95)";
+    } else if(p.kind==="warn"){
+      fxCtx.fillStyle = "rgba(255,220,150,0.95)";
+    } else {
+      fxCtx.fillStyle = "rgba(255,170,190,0.95)";
+    }
+    fxCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+    fxCtx.restore();
+
+    if(p.life<=0) particles.splice(i,1);
+  }
+  requestAnimationFrame(fxTick);
+}
+fxTick();
+
+// helper to burst at element center
+function burstAtEl(el, kind){
+  const r = el.getBoundingClientRect();
+  burst(r.left + r.width/2, r.top + r.height/2, kind);
+}
+
+// ---------- Starfield (background) ----------
+const starCanvas = document.getElementById("starfield");
+const sctx = starCanvas.getContext("2d");
+let sw=0, sh=0;
+let stars = [];
+
+function resizeStars(){
+  sw = starCanvas.width = window.innerWidth;
+  sh = starCanvas.height = window.innerHeight;
+  // regenerate stars
+  const count = Math.floor((sw*sh)/22000);
+  stars = [];
+  for(let i=0;i<count;i++){
+    stars.push({
+      x: Math.random()*sw,
+      y: Math.random()*sh,
+      z: 0.2 + Math.random()*1.6,
+      a: 0.15 + Math.random()*0.55,
+      tw: Math.random()*Math.PI*2
+    });
+  }
+}
+window.addEventListener("resize", resizeStars);
+resizeStars();
+
+function starTick(){
+  sctx.clearRect(0,0,sw,sh);
+  for(const st of stars){
+    st.tw += 0.015*(st.z);
+    const tw = (Math.sin(st.tw)+1)/2;
+    const alpha = st.a*(0.55 + tw*0.45);
+
+    sctx.globalAlpha = alpha;
+    sctx.fillStyle = "white";
+    const r = 0.6 + st.z*0.6;
+    sctx.beginPath();
+    sctx.arc(st.x, st.y, r, 0, Math.PI*2);
+    sctx.fill();
+
+    // slow drift
+    st.y += 0.05*st.z;
+    if(st.y > sh+10){ st.y = -10; st.x = Math.random()*sw; }
+  }
+  requestAnimationFrame(starTick);
+}
+starTick();
+
+// ---------- Educational Model ----------
 function hilalScore({altDeg, elongDeg, ageHours, widthArcMin, haze, clouds}){
   const alt = clamp(altDeg, -1, 15);
   const el  = clamp(elongDeg, 0, 20);
@@ -700,6 +1018,7 @@ function setVerdictBadge(el, verdict){
   el.classList.remove("good","warn","bad");
   el.classList.add(verdict.tone);
 }
+
 function degDiff(a,b){
   const d = Math.abs(((a-b+180)%360)-180);
   return d;
@@ -708,16 +1027,12 @@ function safeId(){ return Math.random().toString(16).slice(2) + Date.now().toStr
 
 // ---------- Game State ----------
 let xp = 0;
+let lastLevel = 1;
 
 // Hilal state
 let hilal = {
-  altDeg: 2.2,
-  elongDeg: 7.0,
-  ageHours: 16,
-  widthArcMin: 0.12,
-  haze: false,
-  clouds: false,
-  log: []
+  altDeg: 2.2, elongDeg: 7.0, ageHours: 16, widthArcMin: 0.12,
+  haze: false, clouds: false, log: []
 };
 
 // Qibla state
@@ -725,41 +1040,20 @@ const QIBLA_LEVELS = [
   { city: "Kuala Lumpur", bearing: 292, tip: "From SE Asia, Qibla is roughly WNW." },
   { city: "London", bearing: 118, tip: "From UK, Qibla is roughly ESE." },
   { city: "Tokyo", bearing: 263, tip: "From Japan, Qibla is roughly W." },
-  { city: "Cape Town", bearing: 25, tip: "From South Africa, Qibla is roughly NNE." },
-  { city: "New York", bearing: 58, tip: "From USA East Coast, Qibla is roughly NE." }
+  { city: "Cape Town", bearing: 25,  tip: "From South Africa, Qibla is roughly NNE." },
+  { city: "New York", bearing: 58,  tip: "From USA East Coast, Qibla is roughly NE." }
 ];
-let qibla = {
-  idx: Math.floor(rng()*QIBLA_LEVELS.length),
-  guess: 0,
-  log: []
-};
+let qibla = { idx: Math.floor(rng()*QIBLA_LEVELS.length), guess: 0, log: [] };
 
 // Prayer planner
 const PRAYER_SCENARIOS = [
-  {
-    id:"malaysia",
-    title:"Equatorial-ish (e.g., Malaysia)",
-    desc:"Normal night; clear separation of twilight and night.",
-    lat:5, summer:false,
-    hint:"Standard angle-based methods usually work fine.",
-    correct:["Standard (angles)","Local authority timetable"]
-  },
-  {
-    id:"uk_summer",
-    title:"High latitude summer (e.g., UK)",
-    desc:"Very late/short night; twilight may persist.",
-    lat:52, summer:true,
+  { id:"malaysia", title:"Equatorial-ish (e.g., Malaysia)", desc:"Normal night; clear separation of twilight and night.", lat:5,
+    hint:"Standard angle-based methods usually work fine.", correct:["Standard (angles)","Local authority timetable"] },
+  { id:"uk_summer", title:"High latitude summer (e.g., UK)", desc:"Very late/short night; twilight may persist.", lat:52,
     hint:"Often needs adjusted methods (nearest latitude/day, 1/7 night, middle of night) per authority guidance.",
-    correct:["Middle of the night","1/7 night","Nearest latitude","Nearest day"]
-  },
-  {
-    id:"arctic",
-    title:"Polar region (midnight sun)",
-    desc:"Sun does not set for weeks.",
-    lat:69, summer:true,
-    hint:"Fixed schedules and authority guidance become essential.",
-    correct:["Local authority timetable","Nearest latitude"]
-  }
+    correct:["Middle of the night","1/7 night","Nearest latitude","Nearest day"] },
+  { id:"arctic", title:"Polar region (midnight sun)", desc:"Sun does not set for weeks.", lat:69,
+    hint:"Fixed schedules and authority guidance become essential.", correct:["Local authority timetable","Nearest latitude"] }
 ];
 const PRAYER_METHODS = [
   {name:"Standard (angles)", detail:"Uses sun angles for Fajr/Isha (works where twilight behaves normally)."},
@@ -769,65 +1063,53 @@ const PRAYER_METHODS = [
   {name:"Nearest day", detail:"Uses nearest day when angles become valid again."},
   {name:"Local authority timetable", detail:"Follow official timetable/masjid guidance for your region."}
 ];
-let prayer = {
-  scenarioId: PRAYER_SCENARIOS[0].id,
-  method: PRAYER_METHODS[0].name,
-  log: []
-};
+let prayer = { scenarioId: PRAYER_SCENARIOS[0].id, method: PRAYER_METHODS[0].name, log: [] };
 
 // Quiz
 let QUIZ_BANK = [
-  {
-    q:"In Islamic astronomy (falak), what does ‘hilal’ usually refer to?",
+  { q:"In Islamic astronomy (falak), what does ‘hilal’ usually refer to?",
     options:["A meteor shower","The first visible crescent after conjunction","A solar eclipse","The full moon"],
-    answer:1,
-    why:"Hilal commonly means the first visible crescent Moon marking the start of a lunar month.",
-    tag:"Hilal"
-  },
-  {
-    q:"Why can prayer times be challenging in high latitudes during summer?",
+    answer:1, why:"Hilal commonly means the first visible crescent Moon marking the start of a lunar month.", tag:"Hilal" },
+  { q:"Why can prayer times be challenging in high latitudes during summer?",
     options:["Because the Moon is always below the horizon","Because twilight can persist and the Sun may not reach standard angles","Because the Kaaba changes location","Because Earth stops rotating"],
-    answer:1,
-    why:"At high latitudes, twilight may not end (or becomes very short), making standard definitions difficult.",
-    tag:"Prayer Times"
-  },
-  {
-    q:"Qibla is the direction Muslims face during prayer toward:",
+    answer:1, why:"At high latitudes, twilight may not end (or becomes very short), making standard definitions difficult.", tag:"Prayer Times" },
+  { q:"Qibla is the direction Muslims face during prayer toward:",
     options:["Al-Aqsa Mosque","The Kaaba in Makkah","The North Star","The Sun"],
-    answer:1,
-    why:"Qibla direction is toward the Kaaba in Makkah.",
-    tag:"Qibla"
-  },
-  {
-    q:"Which tool is most directly used for observing the crescent in traditional rukyah?",
+    answer:1, why:"Qibla direction is toward the Kaaba in Makkah.", tag:"Qibla" },
+  { q:"Which tool is most directly used for observing the crescent in traditional rukyah?",
     options:["Thermometer","Telescope/Binoculars","Seismograph","Barometer"],
-    answer:1,
-    why:"Optical aids like binoculars or telescopes can help observe the crescent (subject to local practice).",
-    tag:"Observation"
-  },
-  {
-    q:"In general, more haze and clouds at the western horizon will:",
+    answer:1, why:"Optical aids like binoculars or telescopes can help observe the crescent (subject to local practice).", tag:"Observation" },
+  { q:"In general, more haze and clouds at the western horizon will:",
     options:["Increase hilal visibility","Have no effect","Reduce visibility","Move the Moon"],
-    answer:2,
-    why:"Atmospheric conditions strongly impact optical visibility.",
-    tag:"Atmosphere"
-  }
+    answer:2, why:"Atmospheric conditions strongly impact optical visibility.", tag:"Atmosphere" }
 ];
-let quiz = {
-  idx: Math.floor(rng()*QUIZ_BANK.length),
-  pick: null,
-  streak: 0,
-  feedback: null
-};
+let quiz = { idx: Math.floor(rng()*QUIZ_BANK.length), pick: null, streak: 0, feedback: null };
 
 // ---------- XP / Level ----------
 function levelFromXp(x){ return Math.floor(x/120)+1; }
 function xpInLevel(x){ return x%120; }
 
-function addXp(delta){
+function addXp(delta, kind="good", burstEl=null){
+  const beforeLevel = levelFromXp(xp);
   xp += delta;
+  const afterLevel = levelFromXp(xp);
+
   renderXp();
+
+  if(burstEl){
+    burstAtEl(burstEl, kind);
+  }else{
+    burst(window.innerWidth*0.5, 120, kind);
+  }
+
+  if(afterLevel > beforeLevel){
+    sfxLevelUp();
+    burst(window.innerWidth*0.5, 100, "good");
+    document.getElementById("levelBadge").classList.add("pop");
+    setTimeout(()=>document.getElementById("levelBadge").classList.remove("pop"), 240);
+  }
 }
+
 function renderXp(){
   const lvl = levelFromXp(xp);
   const inLvl = xpInLevel(xp);
@@ -850,6 +1132,7 @@ const panels = {
 
 tabs.forEach(t=>{
   t.addEventListener("click", ()=>{
+    sfxClick();
     tabs.forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     const k=t.dataset.tab;
@@ -880,6 +1163,7 @@ function toggleSwitch(el, key){
   hilal[key] = !hilal[key];
   setSwitch(el, hilal[key]);
   renderHilal();
+  sfxToggle();
 }
 function renderHilal(){
   document.getElementById("altVal").textContent = hilal.altDeg.toFixed(1);
@@ -892,11 +1176,9 @@ function renderHilal(){
 
   const hs = hilalScore(hilal);
   const v = verdictText(hs);
-  const badge = document.getElementById("hilalVerdictBadge");
-  setVerdictBadge(badge, v);
+  setVerdictBadge(document.getElementById("hilalVerdictBadge"), v);
   document.getElementById("scorePct").textContent = Math.round(hs.score*100);
 
-  // log
   const logWrap = document.getElementById("hilalLog");
   logWrap.innerHTML = "";
   document.getElementById("hilalEmpty").style.display = hilal.log.length ? "none" : "";
@@ -918,7 +1200,7 @@ function renderHilal(){
 }
 
 [altRange, elongRange, ageRange, widthRange].forEach(el=>{
-  el.addEventListener("input", syncHilalFromControls);
+  el.addEventListener("input", ()=>{ syncHilalFromControls(); });
 });
 
 hazeSwitch.addEventListener("click", ()=>toggleSwitch(hazeSwitch,"haze"));
@@ -926,8 +1208,8 @@ cloudSwitch.addEventListener("click", ()=>toggleSwitch(cloudSwitch,"clouds"));
 hazeSwitch.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleSwitch(hazeSwitch,"haze"); } });
 cloudSwitch.addEventListener("keydown",(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleSwitch(cloudSwitch,"clouds"); } });
 
-document.getElementById("btnRandomHilal").addEventListener("click", ()=>{
-  // plausible teaching case
+document.getElementById("btnRandomHilal").addEventListener("click", (e)=>{
+  sfxClick();
   hilal.altDeg = round1(0.5 + rng()*6.0);
   hilal.elongDeg = round1(4.0 + rng()*8.0);
   hilal.ageHours = Math.round(8 + rng()*18);
@@ -941,20 +1223,28 @@ document.getElementById("btnRandomHilal").addEventListener("click", ()=>{
   widthRange.value = hilal.widthArcMin;
 
   renderHilal();
+  burstAtEl(e.currentTarget, "warn");
 });
 
-function submitHilalDecision(decision){
+function submitHilalDecision(decision, btnEl){
   const hs = hilalScore(hilal);
   const v = verdictText(hs);
 
-  // scoring: uncertain zone = learning points either way
-  let delta = 0;
-  if(hs.maybe) delta = 8;
-  else{
+  let delta, good;
+  if(hs.maybe){
+    delta = 8; // learning zone
+    good = "warn";
+  } else {
     const correct = hs.likely ? (decision==="seen") : (decision==="not");
     delta = correct ? 20 : 5;
+    good = correct ? "good" : "bad";
   }
-  addXp(delta);
+
+  addXp(delta, good, btnEl);
+
+  if(good==="good") sfxSuccess();
+  else if(good==="bad") { sfxFail(); btnEl.classList.add("shake"); setTimeout(()=>btnEl.classList.remove("shake"), 380); }
+  else sfxClick();
 
   hilal.log.unshift({
     id: safeId(),
@@ -965,8 +1255,9 @@ function submitHilalDecision(decision){
   hilal.log = hilal.log.slice(0,8);
   renderHilal();
 }
-document.getElementById("btnSeen").addEventListener("click", ()=>submitHilalDecision("seen"));
-document.getElementById("btnNotSeen").addEventListener("click", ()=>submitHilalDecision("not"));
+
+document.getElementById("btnSeen").addEventListener("click", (e)=>submitHilalDecision("seen", e.currentTarget));
+document.getElementById("btnNotSeen").addEventListener("click", (e)=>submitHilalDecision("not", e.currentTarget));
 
 // ---------- Qibla UI ----------
 function currentQibla(){ return QIBLA_LEVELS[qibla.idx]; }
@@ -1001,27 +1292,27 @@ bearingRange.addEventListener("input", ()=>{
   renderQibla();
 });
 
-document.getElementById("btnNextCity").addEventListener("click", ()=>{
+document.getElementById("btnNextCity").addEventListener("click", (e)=>{
+  sfxClick();
   qibla.idx = (qibla.idx + 1) % QIBLA_LEVELS.length;
   qibla.guess = 0;
   bearingRange.value = 0;
   renderQibla();
+  burstAtEl(e.currentTarget, "warn");
 });
 
-document.getElementById("btnSubmitQibla").addEventListener("click", ()=>{
+document.getElementById("btnSubmitQibla").addEventListener("click", (e)=>{
   const lvl = currentQibla();
   const diff = degDiff(qibla.guess, lvl.bearing);
   const stars = diff <= 6 ? 3 : diff <= 15 ? 2 : diff <= 30 ? 1 : 0;
   const delta = 6 + stars*10;
-  addXp(delta);
 
-  qibla.log.unshift({
-    id:safeId(),
-    city:lvl.city,
-    target:lvl.bearing,
-    guess:qibla.guess,
-    diff, stars, delta
-  });
+  const kind = stars>=2 ? "good" : stars===1 ? "warn" : "bad";
+  addXp(delta, kind, e.currentTarget);
+
+  if(stars>=2) sfxSuccess(); else if(stars===0) sfxFail(); else sfxClick();
+
+  qibla.log.unshift({ id:safeId(), city:lvl.city, target:lvl.bearing, guess:qibla.guess, diff, stars, delta });
   qibla.log = qibla.log.slice(0,8);
 
   // next
@@ -1040,6 +1331,7 @@ function renderScenarioList(){
   scenarioList.innerHTML = "";
   PRAYER_SCENARIOS.forEach(s=>{
     const btn=document.createElement("button");
+    btn.type="button";
     btn.className="item quizopt";
     if(s.id===prayer.scenarioId) btn.classList.add("active");
     btn.innerHTML = `
@@ -1050,13 +1342,13 @@ function renderScenarioList(){
       <div class="s">${s.desc}</div>
     `;
     btn.addEventListener("click", ()=>{
+      sfxClick();
       prayer.scenarioId = s.id;
       renderPrayer();
     });
     scenarioList.appendChild(btn);
   });
 }
-
 function renderMethodSelect(){
   methodSelect.innerHTML = "";
   PRAYER_METHODS.forEach(m=>{
@@ -1066,10 +1358,8 @@ function renderMethodSelect(){
   });
   methodSelect.value = prayer.method;
 }
-
 function renderPrayer(){
   renderScenarioList();
-
   const sc = PRAYER_SCENARIOS.find(x=>x.id===prayer.scenarioId) || PRAYER_SCENARIOS[0];
   document.getElementById("scenarioHint").textContent = sc.hint;
 
@@ -1083,7 +1373,6 @@ function renderPrayer(){
     wrap.appendChild(b);
   });
 
-  // method detail
   const md = PRAYER_METHODS.find(m=>m.name===prayer.method);
   methodDetail.textContent = md ? md.detail : "";
 
@@ -1107,24 +1396,19 @@ function renderPrayer(){
     logWrap.appendChild(div);
   });
 }
-
 methodSelect.addEventListener("change", ()=>{
+  sfxClick();
   prayer.method = methodSelect.value;
   renderPrayer();
 });
-
-document.getElementById("btnSubmitPrayer").addEventListener("click", ()=>{
+document.getElementById("btnSubmitPrayer").addEventListener("click", (e)=>{
   const sc = PRAYER_SCENARIOS.find(x=>x.id===prayer.scenarioId) || PRAYER_SCENARIOS[0];
   const ok = sc.correct.includes(prayer.method);
   const delta = ok ? 20 : 7;
-  addXp(delta);
+  addXp(delta, ok ? "good" : "warn", e.currentTarget);
+  ok ? sfxSuccess() : sfxClick();
 
-  prayer.log.unshift({
-    id:safeId(),
-    scenario: sc.title,
-    method: prayer.method,
-    ok, delta
-  });
+  prayer.log.unshift({ id:safeId(), scenario: sc.title, method: prayer.method, ok, delta });
   prayer.log = prayer.log.slice(0,8);
   renderPrayer();
 });
@@ -1134,6 +1418,7 @@ const quizTag = document.getElementById("quizTag");
 const quizQ = document.getElementById("quizQ");
 const quizOptions = document.getElementById("quizOptions");
 const quizFeedback = document.getElementById("quizFeedback");
+const quizQWrap = document.getElementById("quizQWrap");
 
 function renderQuiz(){
   const item = QUIZ_BANK[quiz.idx];
@@ -1141,21 +1426,20 @@ function renderQuiz(){
   document.getElementById("quizStreak").textContent = quiz.streak;
   quizQ.textContent = item.q;
 
-  // options
   quizOptions.innerHTML="";
   item.options.forEach((opt, i)=>{
     const div=document.createElement("div");
     div.className="item quizopt";
     if(quiz.pick===i) div.classList.add("active");
-    div.innerHTML = `<div class="t" style="font-weight:600">${opt}</div>`;
+    div.innerHTML = `<div class="t" style="font-weight:680">${opt}</div>`;
     div.addEventListener("click", ()=>{
+      sfxClick();
       quiz.pick = i;
       renderQuiz();
     });
     quizOptions.appendChild(div);
   });
 
-  // feedback
   quizFeedback.innerHTML="";
   if(quiz.feedback){
     const box=document.createElement("div");
@@ -1170,29 +1454,42 @@ function renderQuiz(){
     quizFeedback.appendChild(box);
   }
 }
-
 function nextQuiz(){
+  sfxClick();
   quiz.idx = (quiz.idx + 1) % QUIZ_BANK.length;
   quiz.pick = null;
   quiz.feedback = null;
   renderQuiz();
 }
-
-document.getElementById("btnQuizSubmit").addEventListener("click", ()=>{
-  if(quiz.pick==null) return;
+document.getElementById("btnQuizSubmit").addEventListener("click", (e)=>{
+  if(quiz.pick==null){
+    sfxFail();
+    quizQWrap.classList.add("shake");
+    setTimeout(()=>quizQWrap.classList.remove("shake"), 380);
+    return;
+  }
   const item = QUIZ_BANK[quiz.idx];
   const ok = quiz.pick === item.answer;
   const delta = ok ? (18 + Math.min(quiz.streak,5)*2) : 6;
-  addXp(delta);
-  quiz.streak = ok ? quiz.streak + 1 : 0;
+
+  addXp(delta, ok ? "good" : "bad", e.currentTarget);
+
+  if(ok){
+    sfxSuccess();
+    burstAtEl(e.currentTarget, "good");
+    quiz.streak += 1;
+  }else{
+    sfxFail();
+    quiz.streak = 0;
+  }
   quiz.feedback = {ok, why:item.why, delta};
   renderQuiz();
 });
-
 document.getElementById("btnQuizNext").addEventListener("click", nextQuiz);
 
 // Quiz builder
-document.getElementById("btnAddQuestion").addEventListener("click", ()=>{
+document.getElementById("btnAddQuestion").addEventListener("click", (e)=>{
+  sfxClick();
   const q = document.getElementById("qbQ").value.trim();
   const tag = document.getElementById("qbTag").value.trim() || "Custom";
   const a = document.getElementById("qbA").value.trim() || "Option A";
@@ -1202,18 +1499,15 @@ document.getElementById("btnAddQuestion").addEventListener("click", ()=>{
   const ans = parseInt(document.getElementById("qbAns").value,10);
   const why = document.getElementById("qbWhy").value.trim();
 
-  const provided = [a,b,c,d].filter(x=>x && x.length);
-  if(!q || provided.length < 2) return;
+  if(!q){
+    sfxFail();
+    document.getElementById("qbQ").classList.add("shake");
+    setTimeout(()=>document.getElementById("qbQ").classList.remove("shake"), 380);
+    return;
+  }
 
-  QUIZ_BANK.push({
-    q,
-    options:[a,b,c,d],
-    answer: ans,
-    why: why || "",
-    tag
-  });
-
-  addXp(10);
+  QUIZ_BANK.push({ q, options:[a,b,c,d], answer: ans, why: why || "", tag });
+  addXp(10, "warn", e.currentTarget);
 
   // clear
   document.getElementById("qbQ").value="";
@@ -1228,7 +1522,7 @@ document.getElementById("btnAddQuestion").addEventListener("click", ()=>{
 function init(){
   renderXp();
 
-  // hilal controls reflect state
+  // hilal
   altRange.value = hilal.altDeg;
   elongRange.value = hilal.elongDeg;
   ageRange.value = hilal.ageHours;
@@ -1245,8 +1539,29 @@ function init(){
 
   // quiz
   renderQuiz();
+
+  // global click SFX on buttons/tabs (already on key actions, but this adds extra polish)
+  document.querySelectorAll("button.btn").forEach(b=>{
+    b.addEventListener("pointerdown", ()=>{ if(soundOn) sfxClick(); }, {passive:true});
+  });
 }
 init();
+
+// ---------- Random Hilal (button already wired above) ----------
+document.getElementById("btnRandomHilal").addEventListener("click", ()=>{
+  hilal.altDeg = round1(0.5 + rng()*6.0);
+  hilal.elongDeg = round1(4.0 + rng()*8.0);
+  hilal.ageHours = Math.round(8 + rng()*18);
+  hilal.widthArcMin = round2(0.04 + rng()*0.26);
+  hilal.haze = rng() < 0.35;
+  hilal.clouds = rng() < 0.25;
+
+  altRange.value = hilal.altDeg;
+  elongRange.value = hilal.elongDeg;
+  ageRange.value = hilal.ageHours;
+  widthRange.value = hilal.widthArcMin;
+  renderHilal();
+});
 </script>
 </body>
 </html>
