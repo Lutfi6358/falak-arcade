@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Falak Arcade — Islamic Astronomy Mini-Game</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.04);
+      --border:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.68);
+      --muted2:rgba(255,255,255,.55);
+      --good:rgba(16,185,129,.22);
+      --goodb:rgba(16,185,129,.40);
+      --warn:rgba(245,158,11,.20);
+      --warnb:rgba(245,158,11,.40);
+      --bad:rgba(244,63,94,.18);
+      --badb:rgba(244,63,94,.40);
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --r: 18px;
+      --r2: 14px;
+      --pad: 16px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background:
+        radial-gradient(1000px 700px at 20% -10%, rgba(99,102,241,.25), transparent 60%),
+        radial-gradient(900px 650px at 85% 0%, rgba(34,197,94,.20), transparent 55%),
+        radial-gradient(1100px 800px at 50% 120%, rgba(245,158,11,.16), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    a{color:inherit}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    @media (min-width:900px){ .wrap{padding:34px} }
+
+    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
+    .space{height:14px}
+    .title{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin-bottom:14px;
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+      width:44px;height:44px;border-radius:16px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      display:grid;place-items:center;
+      box-shadow:var(--shadow);
+    }
+    .h1{font-size:22px;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+    .sub{font-size:13px;color:var(--muted);margin-top:3px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+    }
+    .card2{
+      background:var(--card2);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+    }
+    .pad{padding:var(--pad)}
+    .head{padding:16px 16px 10px 16px}
+    .head h2{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em}
+    .head p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+    .tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    @media(min-width:900px){ .tabs{grid-template-columns:repeat(4,1fr)} }
+    .tab{
+      padding:10px 12px;border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:13px;
+      cursor:pointer;
+      display:flex;gap:8px;align-items:center;justify-content:center;
+      user-select:none;
+      transition:.15s transform, .15s background, .15s color;
+    }
+    .tab:hover{transform:translateY(-1px);background:rgba(255,255,255,.08);color:var(--text)}
+    .tab.active{background:rgba(255,255,255,.12);color:var(--text);border-color:rgba(255,255,255,.18)}
+    .content{padding:16px}
+    .grid{display:grid;gap:14px}
+    @media(min-width:900px){ .grid-3{grid-template-columns:1fr 1fr 1fr} .grid-2{grid-template-columns:1fr 1fr} }
+    .colspan2{grid-column:1/-1}
+    @media(min-width:900px){ .colspan2{grid-column:2/4} }
+
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.20);
+      padding:8px 10px;border-radius:999px;
+      font-size:12px;color:var(--muted);
+    }
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      border:1px solid var(--border);
+      padding:4px 10px;border-radius:999px;
+      font-size:12px;color:var(--text);
+      background:rgba(255,255,255,.06);
+      white-space:nowrap;
+    }
+    .badge.good{background:var(--good);border-color:var(--goodb)}
+    .badge.warn{background:var(--warn);border-color:var(--warnb)}
+    .badge.bad{background:var(--bad);border-color:var(--badb)}
+    .muted{color:var(--muted)}
+    .muted2{color:var(--muted2)}
+    .hr{height:1px;background:var(--border);margin:12px 0}
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+      cursor:pointer;
+      transition:.15s transform, .15s background;
+      user-select:none;
+    }
+    .btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.12)}
+    .btn.secondary{background:rgba(0,0,0,.24)}
+    .btn.full{width:100%}
+    .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .mini{
+      font-size:12px;color:var(--muted2)
+    }
+
+    .control{margin:10px 0 14px}
+    .control .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .control label{font-size:13px;font-weight:600}
+    input[type="range"]{width:100%}
+    .rangehint{display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-top:4px}
+
+    .toggle{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px;border-radius:16px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.05);
+    }
+    .toggle .t1{font-size:13px;font-weight:650}
+    .toggle .t2{font-size:12px;color:var(--muted)}
+    .switch{
+      width:44px;height:26px;border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      position:relative;cursor:pointer;flex:0 0 auto;
+      transition:.15s background;
+    }
+    .switch::after{
+      content:"";position:absolute;top:3px;left:3px;
+      width:18px;height:18px;border-radius:50%;
+      background:rgba(255,255,255,.85);
+      transition:.15s transform;
+    }
+    .switch.on{background:rgba(16,185,129,.25);border-color:rgba(16,185,129,.45)}
+    .switch.on::after{transform:translateX(18px)}
+
+    .note{
+      display:flex;gap:10px;align-items:flex-start;
+      padding:12px;border-radius:16px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:rgba(255,255,255,.40);
+      margin-top:4px;flex:0 0 auto;
+    }
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{
+      padding:12px;border-radius:16px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.05);
+    }
+    .item .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .item .t{font-size:13px;font-weight:650}
+    .item .s{font-size:12px;color:var(--muted);margin-top:6px}
+    .stars{font-size:12px;color:rgba(255,255,255,.75)}
+    .progress{
+      width:170px;height:10px;border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      overflow:hidden;
+    }
+    .bar{height:100%;background:rgba(255,255,255,.65);width:0%}
+    .xpmeta{font-size:12px;color:var(--muted)}
+    .select, .text, .textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.22);
+      color:var(--text);
+      outline:none;
+      font-size:13px;
+    }
+    .textarea{min-height:84px;resize:vertical}
+    .quizopt{cursor:pointer;transition:.15s;background:rgba(255,255,255,.05)}
+    .quizopt:hover{background:rgba(255,255,255,.09)}
+    .quizopt.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22)}
+    .feedback{padding:12px;border-radius:16px;border:1px solid var(--border)}
+    .feedback.good{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.35)}
+    .feedback.bad{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.35)}
+    .footer{padding:14px 16px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🌙</div>
+        <div>
+          <div class="h1">Falak Arcade</div>
+          <div class="sub">Islamic astronomy mini-game (educational simulation — not official criteria)</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="badge" id="levelBadge">Level 1</span>
+        <div class="progress" title="XP progress to next level">
+          <div class="bar" id="xpBar"></div>
+        </div>
+        <span class="xpmeta" id="xpMeta">0/120 XP</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <h2>Choose a mode</h2>
+        <p>Use local religious authority / official timetables for real rulings and decisions.</p>
+      </div>
+
+      <div class="content">
+        <div class="tabs">
+          <div class="tab active" data-tab="hilal">🔭 Hilal Hunt</div>
+          <div class="tab" data-tab="qibla">🧭 Qibla Quest</div>
+          <div class="tab" data-tab="prayer">☀️ Prayer Planner</div>
+          <div class="tab" data-tab="quiz">📘 Quick Quiz</div>
+        </div>
+
+        <div class="space"></div>
+
+        <!-- HILAL -->
+        <section id="panel-hilal">
+          <div class="grid grid-3">
+            <div class="card2">
+              <div class="head">
+                <h2>Setup</h2>
+                <p>Adjust parameters and decide: Seen / Not seen.</p>
+              </div>
+              <div class="pad">
+
+                <button class="btn secondary full" id="btnRandomHilal">⚡ Random case</button>
+                <div class="space"></div>
+
+                <div class="control">
+                  <div class="top">
+                    <label for="altRange">Moon altitude at sunset (°)</label>
+                    <span class="badge" id="altVal">2.2</span>
+                  </div>
+                  <input id="altRange" type="range" min="-0.5" max="12" step="0.1" value="2.2">
+                  <div class="rangehint"><span>-0.5</span><span>12</span></div>
+                  <div class="mini muted2">Higher altitude generally improves chances.</div>
+                </div>
+
+                <div class="control">
+                  <div class="top">
+                    <label for="elongRange">Elongation (°)</label>
+                    <span class="badge" id="elongVal">7.0</span>
+                  </div>
+                  <input id="elongRange" type="range" min="0" max="18" step="0.1" value="7.0">
+                  <div class="rangehint"><span>0</span><span>18</span></div>
+                  <div class="mini muted2">Wider separation from the Sun helps visibility.</div>
+                </div>
+
+                <div class="control">
+                  <div class="top">
+                    <label for="ageRange">Moon age after conjunction (hours)</label>
+                    <span class="badge" id="ageVal">16</span>
+                  </div>
+                  <input id="ageRange" type="range" min="0" max="30" step="1" value="16">
+                  <div class="rangehint"><span>0</span><span>30</span></div>
+                  <div class="mini muted2">Older crescents tend to be easier (simplified).</div>
+                </div>
+
+                <div class="control">
+                  <div class="top">
+                    <label for="widthRange">Crescent width (arcmin)</label>
+                    <span class="badge" id="widthVal">0.12</span>
+                  </div>
+                  <input id="widthRange" type="range" min="0" max="0.6" step="0.01" value="0.12">
+                  <div class="rangehint"><span>0</span><span>0.6</span></div>
+                  <div class="mini muted2">Thicker crescents are usually brighter.</div>
+                </div>
+
+                <div class="toggle">
+                  <div>
+                    <div class="t1">Haze</div>
+                    <div class="t2">Light scattering reduces contrast.</div>
+                  </div>
+                  <div class="switch" id="hazeSwitch" role="switch" aria-checked="false" tabindex="0"></div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="toggle">
+                  <div>
+                    <div class="t1">Clouds near horizon</div>
+                    <div class="t2">May block the crescent even with good geometry.</div>
+                  </div>
+                  <div class="switch" id="cloudSwitch" role="switch" aria-checked="false" tabindex="0"></div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="btnrow">
+                  <button class="btn full" id="btnSeen">✅ Seen</button>
+                  <button class="btn secondary full" id="btnNotSeen">❌ Not seen</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card2 colspan2">
+              <div class="head">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <h2>Analysis</h2>
+                  <span class="badge" id="hilalVerdictBadge">Uncertain</span>
+                </div>
+                <p>Educational visibility score: <span id="scorePct">0</span> / 100</p>
+              </div>
+              <div class="pad">
+                <div class="note">
+                  <div class="dot"></div>
+                  <div>
+                    <div style="font-weight:650;color:var(--text);margin-bottom:6px">How to think about it</div>
+                    <ul style="margin:0;padding-left:18px;line-height:1.5">
+                      <li>Altitude + elongation shape the geometry near sunset.</li>
+                      <li>Age + width relate to illumination/brightness (simplified).</li>
+                      <li>Haze/clouds can dominate real outcomes even with good geometry.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="grid grid-2">
+                  <div class="card2">
+                    <div class="head">
+                      <h2>Your recent attempts</h2>
+                      <p>Learn patterns to earn more XP.</p>
+                    </div>
+                    <div class="pad">
+                      <div class="list" id="hilalLog"></div>
+                      <div class="mini muted2" id="hilalEmpty">No attempts yet. Try a case and decide.</div>
+                    </div>
+                  </div>
+
+                  <div class="card2">
+                    <div class="head">
+                      <h2>Mini goals</h2>
+                      <p>Try these to master the concept.</p>
+                    </div>
+                    <div class="pad">
+                      <div class="list">
+                        <div class="note"><div class="dot"></div><div>Create a “likely visible” case without haze/clouds.</div></div>
+                        <div class="note"><div class="dot"></div><div>Turn on haze and observe how the verdict changes.</div></div>
+                        <div class="note"><div class="dot"></div><div>Keep geometry the same, increase width—what happens?</div></div>
+                        <div class="note"><div class="dot"></div><div>Find a case where the verdict is “Uncertain”.</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- QIBLA -->
+        <section id="panel-qibla" style="display:none">
+          <div class="grid grid-3">
+            <div class="card2">
+              <div class="head">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <h2>Target city</h2>
+                  <button class="btn secondary" id="btnNextCity">🔁 Change</button>
+                </div>
+                <p>Estimate Qibla bearing (0–359°).</p>
+              </div>
+              <div class="pad">
+                <div class="item">
+                  <div class="t" id="qCity">Kuala Lumpur</div>
+                  <div class="s" id="qTip">Tip...</div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="control">
+                  <div class="top">
+                    <label for="bearingRange">Your guess</label>
+                    <span class="badge" id="bearingVal">0°</span>
+                  </div>
+                  <input id="bearingRange" type="range" min="0" max="359" step="1" value="0">
+                  <div class="mini muted2">0°=North, 90°=East, 180°=South, 270°=West</div>
+                </div>
+
+                <button class="btn full" id="btnSubmitQibla">🧭 Submit bearing</button>
+              </div>
+            </div>
+
+            <div class="card2 colspan2">
+              <div class="head">
+                <h2>Results & learning</h2>
+                <p>Closer guesses earn more stars and XP.</p>
+              </div>
+              <div class="pad">
+                <div class="note">
+                  <div class="dot"></div>
+                  <div>
+                    <div style="font-weight:650;color:var(--text);margin-bottom:6px">Real-world note</div>
+                    <div>Accurate Qibla uses great-circle direction (geodesy). This game uses simplified bearings for intuition.</div>
+                  </div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="grid grid-2">
+                  <div class="card2">
+                    <div class="head">
+                      <h2>Recent attempts</h2>
+                      <p>Try to get 3 stars (≤ 6° error).</p>
+                    </div>
+                    <div class="pad">
+                      <div class="list" id="qiblaLog"></div>
+                      <div class="mini muted2" id="qiblaEmpty">No attempts yet.</div>
+                    </div>
+                  </div>
+                  <div class="card2">
+                    <div class="head">
+                      <h2>Practice ideas</h2>
+                      <p>Multiple perspectives for learning.</p>
+                    </div>
+                    <div class="pad">
+                      <div class="list">
+                        <div class="note"><div class="dot"></div><div>Compare regions: UK vs Malaysia vs Japan.</div></div>
+                        <div class="note"><div class="dot"></div><div>Explain why a sphere needs great-circle paths.</div></div>
+                        <div class="note"><div class="dot"></div><div>Relate compass bearings to map orientation.</div></div>
+                        <div class="note"><div class="dot"></div><div>Discuss local magnetic declination (real compass use).</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PRAYER -->
+        <section id="panel-prayer" style="display:none">
+          <div class="grid grid-3">
+            <div class="card2">
+              <div class="head">
+                <h2>Scenario</h2>
+                <p>Pick a case and choose a method.</p>
+              </div>
+              <div class="pad">
+                <div class="mini muted2" style="margin-bottom:8px">Choose scenario</div>
+                <div class="list" id="scenarioList"></div>
+
+                <div class="hr"></div>
+
+                <div class="mini muted2" style="margin-bottom:8px">Choose method</div>
+                <select class="select" id="methodSelect"></select>
+                <div class="mini muted2" id="methodDetail" style="margin-top:8px"></div>
+
+                <div class="space"></div>
+                <button class="btn full" id="btnSubmitPrayer">⏱️ Submit method</button>
+              </div>
+            </div>
+
+            <div class="card2 colspan2">
+              <div class="head">
+                <h2>Feedback</h2>
+                <p>Different councils can apply different rules — this is a learning game.</p>
+              </div>
+              <div class="pad">
+
+                <div class="note" id="scenarioHintBox">
+                  <div class="dot"></div>
+                  <div>
+                    <div style="font-weight:650;color:var(--text);margin-bottom:6px">Hint</div>
+                    <div id="scenarioHint">...</div>
+                  </div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="grid grid-2">
+                  <div class="card2">
+                    <div class="head">
+                      <h2>Commonly acceptable choices (in this game)</h2>
+                      <p>Use local authority for real practice.</p>
+                    </div>
+                    <div class="pad">
+                      <div style="display:flex;flex-wrap:wrap;gap:8px" id="acceptableBadges"></div>
+                      <div class="mini muted2" style="margin-top:10px">
+                        Real implementations depend on fiqh positions and local authority decisions.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card2">
+                    <div class="head">
+                      <h2>Your recent picks</h2>
+                      <p>Track what works in each scenario.</p>
+                    </div>
+                    <div class="pad">
+                      <div class="list" id="prayerLog"></div>
+                      <div class="mini muted2" id="prayerEmpty">No submissions yet.</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- QUIZ -->
+        <section id="panel-quiz" style="display:none">
+          <div class="grid grid-3">
+            <div class="card2">
+              <div class="head">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <h2>Question</h2>
+                  <span class="badge" id="quizTag">Hilal</span>
+                </div>
+                <p>Streak: <span id="quizStreak">0</span></p>
+              </div>
+              <div class="pad">
+                <div class="item">
+                  <div class="t" id="quizQ">...</div>
+                </div>
+
+                <div class="space"></div>
+
+                <div class="list" id="quizOptions"></div>
+
+                <div class="space"></div>
+
+                <div class="btnrow">
+                  <button class="btn full" id="btnQuizSubmit">Submit</button>
+                  <button class="btn secondary full" id="btnQuizNext">Next</button>
+                </div>
+
+                <div class="space"></div>
+                <div id="quizFeedback"></div>
+              </div>
+            </div>
+
+            <div class="card2 colspan2">
+              <div class="head">
+                <h2>Build your own set</h2>
+                <p>Add questions for your class, workshop, or journal club.</p>
+              </div>
+              <div class="pad">
+                <div class="grid grid-2" style="margin-bottom:10px">
+                  <div>
+                    <div class="mini muted2" style="margin-bottom:6px">Question</div>
+                    <input class="text" id="qbQ" placeholder="Write a question about falak..." />
+                  </div>
+                  <div>
+                    <div class="mini muted2" style="margin-bottom:6px">Tag</div>
+                    <input class="text" id="qbTag" placeholder="Hilal / Qibla / Prayer Times" value="Custom"/>
+                  </div>
+                </div>
+
+                <div class="grid grid-2">
+                  <input class="text" id="qbA" placeholder="Option A" />
+                  <input class="text" id="qbB" placeholder="Option B" />
+                  <input class="text" id="qbC" placeholder="Option C" />
+                  <input class="text" id="qbD" placeholder="Option D" />
+                </div>
+
+                <div class="space"></div>
+
+                <div class="grid grid-2">
+                  <div>
+                    <div class="mini muted2" style="margin-bottom:6px">Correct answer</div>
+                    <select class="select" id="qbAns">
+                      <option value="0">A</option>
+                      <option value="1" selected>B</option>
+                      <option value="2">C</option>
+                      <option value="3">D</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="mini muted2" style="margin-bottom:6px">Explanation (optional)</div>
+                    <input class="text" id="qbWhy" placeholder="Why is that the correct answer?" />
+                  </div>
+                </div>
+
+                <div class="space"></div>
+                <button class="btn" id="btnAddQuestion">➕ Add question (+10 XP)</button>
+
+                <div class="space"></div>
+                <div class="note">
+                  <div class="dot"></div>
+                  <div>Tip: tailor questions to rukyah, fiqh, image processing, light pollution, or your HORTOH workflow.</div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="space"></div>
+
+    <div class="card">
+      <div class="footer">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:13px;font-weight:650">Your progress</div>
+            <div class="mini muted">Total XP: <span id="totalXp">0</span> • Level <span id="totalLevel">1</span></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span class="badge">Hilal</span>
+            <span class="badge">Qibla</span>
+            <span class="badge">Prayer Times</span>
+            <span class="badge">Quiz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* ===========================
+   Falak Arcade — Vanilla JS
+   Educational simulation only
+   =========================== */
+
+// ---------- Helpers ----------
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const round1 = (n)=>Math.round(n*10)/10;
+const round2 = (n)=>Math.round(n*100)/100;
+
+function todaySeed(){
+  const d=new Date();
+  return (d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate())>>>0;
+}
+function seededRng(seed){
+  let s = seed>>>0;
+  return ()=>{ s=(1664525*s + 1013904223)>>>0; return s/4294967296; };
+}
+const rng = seededRng(todaySeed());
+
+function hilalScore({altDeg, elongDeg, ageHours, widthArcMin, haze, clouds}){
+  const alt = clamp(altDeg, -1, 15);
+  const el  = clamp(elongDeg, 0, 20);
+  const age = clamp(ageHours, 0, 30);
+  const w   = clamp(widthArcMin, 0, 1);
+
+  const base =
+    0.35*(alt/10) +
+    0.35*(el/15) +
+    0.20*(age/24) +
+    0.10*(w/0.4);
+
+  const weatherPenalty = (haze?0.14:0) + (clouds?0.22:0);
+  const score = clamp(base - weatherPenalty, 0, 1);
+
+  const likely = score >= 0.62;
+  const maybe  = score >= 0.45 && score < 0.62;
+  return {score, likely, maybe};
+}
+function verdictText({likely, maybe}){
+  if(likely) return {label:"Likely visible", tone:"good"};
+  if(maybe)  return {label:"Uncertain", tone:"warn"};
+  return {label:"Unlikely", tone:"bad"};
+}
+function setVerdictBadge(el, verdict){
+  el.textContent = verdict.label;
+  el.classList.remove("good","warn","bad");
+  el.classList.add(verdict.tone);
+}
+function degDiff(a,b){
+  const d = Math.abs(((a-b+180)%360)-180);
+  return d;
+}
+function safeId(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+// ---------- Game State ----------
+let xp = 0;
+
+// Hilal state
+let hilal = {
+  altDeg: 2.2,
+  elongDeg: 7.0,
+  ageHours: 16,
+  widthArcMin: 0.12,
+  haze: false,
+  clouds: false,
+  log: []
+};
+
+// Qibla state
+const QIBLA_LEVELS = [
+  { city: "Kuala Lumpur", bearing: 292, tip: "From SE Asia, Qibla is roughly WNW." },
+  { city: "London", bearing: 118, tip: "From UK, Qibla is roughly ESE." },
+  { city: "Tokyo", bearing: 263, tip: "From Japan, Qibla is roughly W." },
+  { city: "Cape Town", bearing: 25, tip: "From South Africa, Qibla is roughly NNE." },
+  { city: "New York", bearing: 58, tip: "From USA East Coast, Qibla is roughly NE." }
+];
+let qibla = {
+  idx: Math.floor(rng()*QIBLA_LEVELS.length),
+  guess: 0,
+  log: []
+};
+
+// Prayer planner
+const PRAYER_SCENARIOS = [
+  {
+    id:"malaysia",
+    title:"Equatorial-ish (e.g., Malaysia)",
+    desc:"Normal night; clear separation of twilight and night.",
+    lat:5, summer:false,
+    hint:"Standard angle-based methods usually work fine.",
+    correct:["Standard (angles)","Local authority timetable"]
+  },
+  {
+    id:"uk_summer",
+    title:"High latitude summer (e.g., UK)",
+    desc:"Very late/short night; twilight may persist.",
+    lat:52, summer:true,
+    hint:"Often needs adjusted methods (nearest latitude/day, 1/7 night, middle of night) per authority guidance.",
+    correct:["Middle of the night","1/7 night","Nearest latitude","Nearest day"]
+  },
+  {
+    id:"arctic",
+    title:"Polar region (midnight sun)",
+    desc:"Sun does not set for weeks.",
+    lat:69, summer:true,
+    hint:"Fixed schedules and authority guidance become essential.",
+    correct:["Local authority timetable","Nearest latitude"]
+  }
+];
+const PRAYER_METHODS = [
+  {name:"Standard (angles)", detail:"Uses sun angles for Fajr/Isha (works where twilight behaves normally)."},
+  {name:"Middle of the night", detail:"Splits night into halves; sets times around midpoint (used in some guidance)."},
+  {name:"1/7 night", detail:"Divides night into 7 parts; allocates twilight portion (seen in some fiqh discussions)."},
+  {name:"Nearest latitude", detail:"Adopts times from a latitude where twilight is normal (e.g., 48°)."},
+  {name:"Nearest day", detail:"Uses nearest day when angles become valid again."},
+  {name:"Local authority timetable", detail:"Follow official timetable/masjid guidance for your region."}
+];
+let prayer = {
+  scenarioId: PRAYER_SCENARIOS[0].id,
+  method: PRAYER_METHODS[0].name,
+  log: []
+};
+
+// Quiz
+let QUIZ_BANK = [
+  {
+    q:"In Islamic astronomy (falak), what does ‘hilal’ usually refer to?",
+    options:["A meteor shower","The first visible crescent after conjunction","A solar eclipse","The full moon"],
+    answer:1,
+    why:"Hilal commonly means the first visible crescent Moon marking the start of a lunar month.",
+    tag:"Hilal"
+  },
+  {
+    q:"Why can prayer times be challenging in high latitudes during summer?",
+    options:["Because the Moon is always below the horizon","Because twilight can persist and the Sun may not reach standard angles","Because the Kaaba changes location","Because Earth stops rotating"],
+    answer:1,
+    why:"At high latitudes, twilight may not end (or becomes very short), making standard definitions difficult.",
+    tag:"Prayer Times"
+  },
+  {
+    q:"Qibla is the direction Muslims face during prayer toward:",
+    options:["Al-Aqsa Mosque","The Kaaba in Makkah","The North Star","The Sun"],
+    answer:1,
+    why:"Qibla direction is toward the Kaaba in Makkah.",
+    tag:"Qibla"
+  },
+  {
+    q:"Which tool is most directly used for observing the crescent in traditional rukyah?",
+    options:["Thermometer","Telescope/Binoculars","Seismograph","Barometer"],
+    answer:1,
+    why:"Optical aids like binoculars or telescopes can help observe the crescent (subject to local practice).",
+    tag:"Observation"
+  },
+  {
+    q:"In general, more haze and clouds at the western horizon will:",
+    options:["Increase hilal visibility","Have no effect","Reduce visibility","Move the Moon"],
+    answer:2,
+    why:"Atmospheric conditions strongly impact optical visibility.",
+    tag:"Atmosphere"
+  }
+];
+let quiz = {
+  idx: Math.floor(rng()*QUIZ_BANK.length),
+  pick: null,
+  streak: 0,
+  feedback: null
+};
+
+// ---------- XP / Level ----------
+function levelFromXp(x){ return Math.floor(x/120)+1; }
+function xpInLevel(x){ return x%120; }
+
+function addXp(delta){
+  xp += delta;
+  renderXp();
+}
+function renderXp(){
+  const lvl = levelFromXp(xp);
+  const inLvl = xpInLevel(xp);
+  document.getElementById("levelBadge").textContent = `Level ${lvl}`;
+  document.getElementById("xpMeta").textContent = `${inLvl}/120 XP`;
+  document.getElementById("xpBar").style.width = `${(inLvl/120)*100}%`;
+
+  document.getElementById("totalXp").textContent = xp;
+  document.getElementById("totalLevel").textContent = lvl;
+}
+
+// ---------- Tabs ----------
+const tabs = document.querySelectorAll(".tab");
+const panels = {
+  hilal: document.getElementById("panel-hilal"),
+  qibla: document.getElementById("panel-qibla"),
+  prayer: document.getElementById("panel-prayer"),
+  quiz: document.getElementById("panel-quiz")
+};
+
+tabs.forEach(t=>{
+  t.addEventListener("click", ()=>{
+    tabs.forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const k=t.dataset.tab;
+    Object.keys(panels).forEach(p=>panels[p].style.display = (p===k) ? "" : "none");
+  });
+});
+
+// ---------- Hilal UI ----------
+const altRange = document.getElementById("altRange");
+const elongRange = document.getElementById("elongRange");
+const ageRange = document.getElementById("ageRange");
+const widthRange = document.getElementById("widthRange");
+const hazeSwitch = document.getElementById("hazeSwitch");
+const cloudSwitch = document.getElementById("cloudSwitch");
+
+function syncHilalFromControls(){
+  hilal.altDeg = parseFloat(altRange.value);
+  hilal.elongDeg = parseFloat(elongRange.value);
+  hilal.ageHours = parseInt(ageRange.value,10);
+  hilal.widthArcMin = parseFloat(widthRange.value);
+  renderHilal();
+}
+function setSwitch(el, on){
+  el.classList.toggle("on", !!on);
+  el.setAttribute("aria-checked", on ? "true":"false");
+}
+function toggleSwitch(el, key){
+  hilal[key] = !hilal[key];
+  setSwitch(el, hilal[key]);
+  renderHilal();
+}
+function renderHilal(){
+  document.getElementById("altVal").textContent = hilal.altDeg.toFixed(1);
+  document.getElementById("elongVal").textContent = hilal.elongDeg.toFixed(1);
+  document.getElementById("ageVal").textContent = String(hilal.ageHours);
+  document.getElementById("widthVal").textContent = hilal.widthArcMin.toFixed(2);
+
+  setSwitch(hazeSwitch, hilal.haze);
+  setSwitch(cloudSwitch, hilal.clouds);
+
+  const hs = hilalScore(hilal);
+  const v = verdictText(hs);
+  const badge = document.getElementById("hilalVerdictBadge");
+  setVerdictBadge(badge, v);
+  document.getElementById("scorePct").textContent = Math.round(hs.score*100);
+
+  // log
+  const logWrap = document.getElementById("hilalLog");
+  logWrap.innerHTML = "";
+  document.getElementById("hilalEmpty").style.display = hilal.log.length ? "none" : "";
+  hilal.log.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.innerHTML = `
+      <div class="top">
+        <div class="t">${r.verdict}</div>
+        <span class="badge">+${r.delta} XP</span>
+      </div>
+      <div class="s">Alt ${r.altDeg}°, El ${r.elongDeg}°, Age ${r.ageHours}h, Width ${r.widthArcMin}′
+        ${r.haze ? " • haze":""}${r.clouds ? " • clouds":""}
+      </div>
+      <div class="mini muted2" style="margin-top:6px">You chose: ${r.decision === "seen" ? "Seen" : "Not seen"}</div>
+    `;
+    logWrap.appendChild(div);
+  });
+}
+
+[altRange, elongRange, ageRange, widthRange].forEach(el=>{
+  el.addEventListener("input", syncHilalFromControls);
+});
+
+hazeSwitch.addEventListener("click", ()=>toggleSwitch(hazeSwitch,"haze"));
+cloudSwitch.addEventListener("click", ()=>toggleSwitch(cloudSwitch,"clouds"));
+hazeSwitch.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleSwitch(hazeSwitch,"haze"); } });
+cloudSwitch.addEventListener("keydown",(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleSwitch(cloudSwitch,"clouds"); } });
+
+document.getElementById("btnRandomHilal").addEventListener("click", ()=>{
+  // plausible teaching case
+  hilal.altDeg = round1(0.5 + rng()*6.0);
+  hilal.elongDeg = round1(4.0 + rng()*8.0);
+  hilal.ageHours = Math.round(8 + rng()*18);
+  hilal.widthArcMin = round2(0.04 + rng()*0.26);
+  hilal.haze = rng() < 0.35;
+  hilal.clouds = rng() < 0.25;
+
+  altRange.value = hilal.altDeg;
+  elongRange.value = hilal.elongDeg;
+  ageRange.value = hilal.ageHours;
+  widthRange.value = hilal.widthArcMin;
+
+  renderHilal();
+});
+
+function submitHilalDecision(decision){
+  const hs = hilalScore(hilal);
+  const v = verdictText(hs);
+
+  // scoring: uncertain zone = learning points either way
+  let delta = 0;
+  if(hs.maybe) delta = 8;
+  else{
+    const correct = hs.likely ? (decision==="seen") : (decision==="not");
+    delta = correct ? 20 : 5;
+  }
+  addXp(delta);
+
+  hilal.log.unshift({
+    id: safeId(),
+    altDeg: hilal.altDeg, elongDeg: hilal.elongDeg, ageHours: hilal.ageHours,
+    widthArcMin: hilal.widthArcMin, haze: hilal.haze, clouds: hilal.clouds,
+    decision, verdict: v.label, score: hs.score, delta
+  });
+  hilal.log = hilal.log.slice(0,8);
+  renderHilal();
+}
+document.getElementById("btnSeen").addEventListener("click", ()=>submitHilalDecision("seen"));
+document.getElementById("btnNotSeen").addEventListener("click", ()=>submitHilalDecision("not"));
+
+// ---------- Qibla UI ----------
+function currentQibla(){ return QIBLA_LEVELS[qibla.idx]; }
+const bearingRange = document.getElementById("bearingRange");
+
+function renderQibla(){
+  const lvl = currentQibla();
+  document.getElementById("qCity").textContent = lvl.city;
+  document.getElementById("qTip").textContent = "Tip: " + lvl.tip;
+  document.getElementById("bearingVal").textContent = qibla.guess + "°";
+
+  const logWrap = document.getElementById("qiblaLog");
+  logWrap.innerHTML = "";
+  document.getElementById("qiblaEmpty").style.display = qibla.log.length ? "none" : "";
+  qibla.log.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.innerHTML = `
+      <div class="top">
+        <div class="t">${r.city}</div>
+        <span class="badge">+${r.delta} XP</span>
+      </div>
+      <div class="s">Target ${r.target}° • You ${r.guess}° • Δ ${Math.round(r.diff)}°</div>
+      <div class="mini muted2" style="margin-top:6px">Stars: <span class="stars">${"★".repeat(r.stars)}${"☆".repeat(3-r.stars)}</span></div>
+    `;
+    logWrap.appendChild(div);
+  });
+}
+
+bearingRange.addEventListener("input", ()=>{
+  qibla.guess = parseInt(bearingRange.value,10);
+  renderQibla();
+});
+
+document.getElementById("btnNextCity").addEventListener("click", ()=>{
+  qibla.idx = (qibla.idx + 1) % QIBLA_LEVELS.length;
+  qibla.guess = 0;
+  bearingRange.value = 0;
+  renderQibla();
+});
+
+document.getElementById("btnSubmitQibla").addEventListener("click", ()=>{
+  const lvl = currentQibla();
+  const diff = degDiff(qibla.guess, lvl.bearing);
+  const stars = diff <= 6 ? 3 : diff <= 15 ? 2 : diff <= 30 ? 1 : 0;
+  const delta = 6 + stars*10;
+  addXp(delta);
+
+  qibla.log.unshift({
+    id:safeId(),
+    city:lvl.city,
+    target:lvl.bearing,
+    guess:qibla.guess,
+    diff, stars, delta
+  });
+  qibla.log = qibla.log.slice(0,8);
+
+  // next
+  qibla.idx = (qibla.idx + 1) % QIBLA_LEVELS.length;
+  qibla.guess = 0;
+  bearingRange.value = 0;
+  renderQibla();
+});
+
+// ---------- Prayer Planner UI ----------
+const scenarioList = document.getElementById("scenarioList");
+const methodSelect = document.getElementById("methodSelect");
+const methodDetail = document.getElementById("methodDetail");
+
+function renderScenarioList(){
+  scenarioList.innerHTML = "";
+  PRAYER_SCENARIOS.forEach(s=>{
+    const btn=document.createElement("button");
+    btn.className="item quizopt";
+    if(s.id===prayer.scenarioId) btn.classList.add("active");
+    btn.innerHTML = `
+      <div class="top">
+        <div class="t">${s.title}</div>
+        <span class="badge">~${s.lat}°</span>
+      </div>
+      <div class="s">${s.desc}</div>
+    `;
+    btn.addEventListener("click", ()=>{
+      prayer.scenarioId = s.id;
+      renderPrayer();
+    });
+    scenarioList.appendChild(btn);
+  });
+}
+
+function renderMethodSelect(){
+  methodSelect.innerHTML = "";
+  PRAYER_METHODS.forEach(m=>{
+    const opt=document.createElement("option");
+    opt.value=m.name; opt.textContent=m.name;
+    methodSelect.appendChild(opt);
+  });
+  methodSelect.value = prayer.method;
+}
+
+function renderPrayer(){
+  renderScenarioList();
+
+  const sc = PRAYER_SCENARIOS.find(x=>x.id===prayer.scenarioId) || PRAYER_SCENARIOS[0];
+  document.getElementById("scenarioHint").textContent = sc.hint;
+
+  // acceptable badges
+  const wrap=document.getElementById("acceptableBadges");
+  wrap.innerHTML="";
+  sc.correct.forEach(c=>{
+    const b=document.createElement("span");
+    b.className="badge";
+    b.textContent=c;
+    wrap.appendChild(b);
+  });
+
+  // method detail
+  const md = PRAYER_METHODS.find(m=>m.name===prayer.method);
+  methodDetail.textContent = md ? md.detail : "";
+
+  // log
+  const logWrap = document.getElementById("prayerLog");
+  logWrap.innerHTML="";
+  document.getElementById("prayerEmpty").style.display = prayer.log.length ? "none" : "";
+  prayer.log.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.innerHTML = `
+      <div class="top">
+        <div class="t">${r.scenario}</div>
+        <span class="badge">+${r.delta} XP</span>
+      </div>
+      <div class="s">Method: ${r.method}</div>
+      <div class="mini" style="margin-top:6px;color:${r.ok ? "rgba(16,185,129,.95)" : "rgba(245,158,11,.95)"}">
+        ${r.ok ? "Reasonable for this scenario" : "Less suitable here (try another rule)"}
+      </div>
+    `;
+    logWrap.appendChild(div);
+  });
+}
+
+methodSelect.addEventListener("change", ()=>{
+  prayer.method = methodSelect.value;
+  renderPrayer();
+});
+
+document.getElementById("btnSubmitPrayer").addEventListener("click", ()=>{
+  const sc = PRAYER_SCENARIOS.find(x=>x.id===prayer.scenarioId) || PRAYER_SCENARIOS[0];
+  const ok = sc.correct.includes(prayer.method);
+  const delta = ok ? 20 : 7;
+  addXp(delta);
+
+  prayer.log.unshift({
+    id:safeId(),
+    scenario: sc.title,
+    method: prayer.method,
+    ok, delta
+  });
+  prayer.log = prayer.log.slice(0,8);
+  renderPrayer();
+});
+
+// ---------- Quiz UI ----------
+const quizTag = document.getElementById("quizTag");
+const quizQ = document.getElementById("quizQ");
+const quizOptions = document.getElementById("quizOptions");
+const quizFeedback = document.getElementById("quizFeedback");
+
+function renderQuiz(){
+  const item = QUIZ_BANK[quiz.idx];
+  quizTag.textContent = item.tag;
+  document.getElementById("quizStreak").textContent = quiz.streak;
+  quizQ.textContent = item.q;
+
+  // options
+  quizOptions.innerHTML="";
+  item.options.forEach((opt, i)=>{
+    const div=document.createElement("div");
+    div.className="item quizopt";
+    if(quiz.pick===i) div.classList.add("active");
+    div.innerHTML = `<div class="t" style="font-weight:600">${opt}</div>`;
+    div.addEventListener("click", ()=>{
+      quiz.pick = i;
+      renderQuiz();
+    });
+    quizOptions.appendChild(div);
+  });
+
+  // feedback
+  quizFeedback.innerHTML="";
+  if(quiz.feedback){
+    const box=document.createElement("div");
+    box.className = "feedback " + (quiz.feedback.ok ? "good":"bad");
+    box.innerHTML = `
+      <div class="top" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div class="t" style="font-size:13px">${quiz.feedback.ok ? "Correct" : "Not quite"}</div>
+        <span class="badge">+${quiz.feedback.delta} XP</span>
+      </div>
+      <div class="s" style="margin-top:6px">${quiz.feedback.why || ""}</div>
+    `;
+    quizFeedback.appendChild(box);
+  }
+}
+
+function nextQuiz(){
+  quiz.idx = (quiz.idx + 1) % QUIZ_BANK.length;
+  quiz.pick = null;
+  quiz.feedback = null;
+  renderQuiz();
+}
+
+document.getElementById("btnQuizSubmit").addEventListener("click", ()=>{
+  if(quiz.pick==null) return;
+  const item = QUIZ_BANK[quiz.idx];
+  const ok = quiz.pick === item.answer;
+  const delta = ok ? (18 + Math.min(quiz.streak,5)*2) : 6;
+  addXp(delta);
+  quiz.streak = ok ? quiz.streak + 1 : 0;
+  quiz.feedback = {ok, why:item.why, delta};
+  renderQuiz();
+});
+
+document.getElementById("btnQuizNext").addEventListener("click", nextQuiz);
+
+// Quiz builder
+document.getElementById("btnAddQuestion").addEventListener("click", ()=>{
+  const q = document.getElementById("qbQ").value.trim();
+  const tag = document.getElementById("qbTag").value.trim() || "Custom";
+  const a = document.getElementById("qbA").value.trim() || "Option A";
+  const b = document.getElementById("qbB").value.trim() || "Option B";
+  const c = document.getElementById("qbC").value.trim() || "Option C";
+  const d = document.getElementById("qbD").value.trim() || "Option D";
+  const ans = parseInt(document.getElementById("qbAns").value,10);
+  const why = document.getElementById("qbWhy").value.trim();
+
+  const provided = [a,b,c,d].filter(x=>x && x.length);
+  if(!q || provided.length < 2) return;
+
+  QUIZ_BANK.push({
+    q,
+    options:[a,b,c,d],
+    answer: ans,
+    why: why || "",
+    tag
+  });
+
+  addXp(10);
+
+  // clear
+  document.getElementById("qbQ").value="";
+  document.getElementById("qbA").value="";
+  document.getElementById("qbB").value="";
+  document.getElementById("qbC").value="";
+  document.getElementById("qbD").value="";
+  document.getElementById("qbWhy").value="";
+});
+
+// ---------- Init ----------
+function init(){
+  renderXp();
+
+  // hilal controls reflect state
+  altRange.value = hilal.altDeg;
+  elongRange.value = hilal.elongDeg;
+  ageRange.value = hilal.ageHours;
+  widthRange.value = hilal.widthArcMin;
+  renderHilal();
+
+  // qibla
+  bearingRange.value = 0;
+  renderQibla();
+
+  // prayer
+  renderMethodSelect();
+  renderPrayer();
+
+  // quiz
+  renderQuiz();
+}
+init();
+</script>
+</body>
+</html>
