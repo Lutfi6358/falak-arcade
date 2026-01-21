@@ -10,6 +10,8 @@ This project introduces core concepts such as:
 ⚠️ This application is **educational** and does NOT replace official
 rukyah, fiqh rulings, or local religious authority decisions.
 
+Link: https://lutfi6358.github.io/falak-arcade/
+
 ---
 
 ## 🎮 Game Modes
