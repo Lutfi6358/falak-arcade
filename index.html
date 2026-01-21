@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lunar Navigator — Arcade + Educational</title>
+  <title>Islamic Astronomy Arcade — Lunar Navigator</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,6 +16,7 @@
     .btn { transition: all 0.18s ease; cursor:pointer; }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,0.35); }
     .btn:active { transform: translateY(0px) scale(0.98); }
+    .chip { border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); }
 
     .game-active #normal-ui { display:none; }
     .game-active #game-ui { display:flex; }
@@ -28,7 +29,6 @@
     }
     .target-active { animation: pulse-border 2s infinite; }
 
-    /* Screen flash on hit/miss */
     #flash {
       position: fixed; inset: 0;
       pointer-events:none;
@@ -36,6 +36,13 @@
       transition: opacity 120ms ease;
       z-index: 999;
       mix-blend-mode: screen;
+    }
+
+    /* Particles canvas (2D overlay) */
+    #fx {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 1000;
     }
 
     /* Slider overlay: target windows */
@@ -70,19 +77,23 @@
       border-color: rgba(245,158,11,0.70);
       box-shadow: 0 0 14px rgba(245,158,11,0.22);
     }
-    .overlayWindow.bad {
-      background: rgba(244,63,94,0.28);
-      border-color: rgba(244,63,94,0.55);
-      box-shadow: 0 0 14px rgba(244,63,94,0.18);
-    }
 
-    /* small arcade badge */
-    .chip { border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); }
+    /* Mission panels */
+    .missionCard {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+    .missionCard:hover { transform: translateY(-1px); background: rgba(255,255,255,0.09); }
+    .missionActive { border-color: rgba(99,102,241,0.7); background: rgba(99,102,241,0.12); }
+
+    input[type="range"]::-webkit-slider-thumb { cursor: pointer; }
   </style>
 </head>
 
 <body>
   <div id="flash"></div>
+  <canvas id="fx"></canvas>
 
   <!-- UI Layer -->
   <div id="ui-layer" class="p-4 md:p-6 flex flex-col justify-between z-10">
@@ -93,7 +104,7 @@
       <div class="glass p-5 rounded-2xl max-w-md border-t-4 border-indigo-500">
         <div class="flex justify-between items-center mb-2">
           <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300">
-            Lunar Navigator
+            Islamic Astronomy Arcade
           </h1>
           <span id="view-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-900 text-indigo-200 border border-indigo-700 uppercase tracking-wider">
             Orbit View
@@ -101,47 +112,63 @@
         </div>
 
         <p id="mode-desc" class="text-sm text-slate-300 mb-4">
-          Drag to rotate (orbit view). Toggle Earth View to see phases as observed.
+          Orbit View: drag to rotate. Switch to Earth View to see phases as observed.
         </p>
 
         <div class="grid grid-cols-2 gap-2">
           <button id="btn-view" class="btn bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
             </svg>
             Earth View
           </button>
 
           <button id="btn-game" class="btn bg-emerald-600 hover:bg-emerald-500 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            Arcade Mission
+            Start Campaign
           </button>
         </div>
 
         <div class="mt-3 flex flex-wrap gap-2 items-center">
           <button id="btn-sound" class="btn chip px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-white/10">
-            🔊 Sound: ON
+            🔊 SFX: ON
+          </button>
+          <button id="btn-music" class="btn chip px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-white/10">
+            🎵 Music: OFF
           </button>
 
           <span class="chip px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider text-slate-200">
             XP: <span id="xp">0</span>
           </span>
-
           <span class="chip px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider text-slate-200">
             Level: <span id="level">1</span>
           </span>
-
           <span class="chip px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider text-slate-200">
             Streak: <span id="streak">0</span>
           </span>
+        </div>
+
+        <!-- Mission selector -->
+        <div class="mt-4 grid grid-cols-3 gap-2">
+          <button id="m1" class="missionCard missionActive rounded-xl p-2 text-left interactive">
+            <div class="text-[11px] font-extrabold text-indigo-200 uppercase tracking-wider">Mission 1</div>
+            <div class="text-sm font-extrabold">Phase Hunter</div>
+            <div class="text-[11px] text-slate-300 leading-snug">Match lunar phases (Hilal option).</div>
+          </button>
+          <button id="m2" class="missionCard rounded-xl p-2 text-left interactive">
+            <div class="text-[11px] font-extrabold text-indigo-200 uppercase tracking-wider">Mission 2</div>
+            <div class="text-sm font-extrabold">Qibla Dash</div>
+            <div class="text-[11px] text-slate-300 leading-snug">Set bearing to Makkah quickly.</div>
+          </button>
+          <button id="m3" class="missionCard rounded-xl p-2 text-left interactive">
+            <div class="text-[11px] font-extrabold text-indigo-200 uppercase tracking-wider">Mission 3</div>
+            <div class="text-sm font-extrabold">High-Lat Planner</div>
+            <div class="text-[11px] text-slate-300 leading-snug">Fast quiz on prayer time methods.</div>
+          </button>
         </div>
       </div>
 
@@ -154,16 +181,18 @@
         <div class="mt-3 w-full text-left">
           <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Education</div>
           <div id="edu-mini" class="text-xs text-slate-300 leading-snug">
-            New Moon: the Moon is near conjunction; the illuminated side faces away from Earth.
+            New Moon: near conjunction; illuminated side faces away from Earth.
           </div>
         </div>
       </div>
 
-      <!-- Game Score Panel -->
-      <div id="game-ui" class="glass p-4 rounded-xl flex-col items-end border-r-4 border-emerald-500 target-active w-64">
-        <div class="text-xs text-emerald-300 font-extrabold uppercase tracking-wider">Mission Target</div>
-        <div id="target-phase" class="text-lg font-extrabold text-white mb-1">Find Full Moon</div>
+      <!-- Game Panel -->
+      <div id="game-ui" class="glass p-4 rounded-xl flex-col items-end border-r-4 border-emerald-500 target-active w-72">
+        <div class="text-xs text-emerald-300 font-extrabold uppercase tracking-wider">Campaign</div>
+        <div id="missionTitle" class="text-lg font-extrabold text-white mb-1">Phase Hunter</div>
+        <div id="target-phase" class="text-sm font-extrabold text-emerald-100 mb-2">Target: Waxing Crescent</div>
 
+        <!-- Timer -->
         <div class="w-full mt-1 flex items-center justify-between">
           <div class="text-xs text-slate-300">Timer</div>
           <div class="text-xs font-mono text-emerald-200"><span id="timer">20.0</span>s</div>
@@ -174,22 +203,16 @@
 
         <div class="mt-2 text-3xl font-mono text-emerald-200" id="score">Score: 0</div>
 
-        <div class="mt-2 w-full">
-          <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">How close?</div>
-          <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden border border-white/10">
-            <div id="closebar" class="h-full bg-amber-300/70" style="width:0%"></div>
-          </div>
-          <div class="mt-1 text-xs text-slate-300">
-            <span id="closeText">Move the slider to match the target window.</span>
-          </div>
-        </div>
+        <!-- Mission body -->
+        <div class="mt-3 w-full" id="missionBody"></div>
 
+        <!-- Bottom controls -->
         <div class="mt-3 grid grid-cols-2 gap-2 w-full">
-          <button id="btn-scan" class="btn w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded text-xs font-extrabold uppercase">
-            Scan
+          <button id="btn-action" class="btn w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded text-xs font-extrabold uppercase">
+            Action
           </button>
-          <button id="btn-hilal" class="btn w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-xs font-extrabold uppercase">
-            Hilal Mode
+          <button id="btn-mode" class="btn w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-xs font-extrabold uppercase">
+            Mode
           </button>
         </div>
       </div>
@@ -205,13 +228,16 @@
     <!-- Footer Controls -->
     <div class="w-full interactive space-y-4">
       <button id="btn-exit-game" class="hidden interactive mx-auto bg-red-500/80 hover:bg-red-500 text-white px-6 py-2 rounded-full font-extrabold text-sm backdrop-blur-sm transition mb-1">
-        Exit Mission
+        Exit Campaign
       </button>
 
+      <!-- Main controls panel (phases slider always visible; missions can reuse it) -->
       <div id="controls-normal" class="glass p-4 rounded-2xl flex flex-col gap-4">
         <div id="phase-info" class="text-center">
           <h2 id="detail-title" class="text-lg font-extrabold text-indigo-200">New Moon</h2>
-          <p id="detail-desc" class="text-xs text-slate-400 max-w-2xl mx-auto mt-1">The Moon is between Earth and Sun (conjunction). The bright side faces away.</p>
+          <p id="detail-desc" class="text-xs text-slate-400 max-w-2xl mx-auto mt-1">
+            Conjunction (ijtima’). The bright side faces away; usually not visible.
+          </p>
         </div>
 
         <div class="flex items-center gap-4">
@@ -223,7 +249,6 @@
           <div class="sliderWrap flex-1">
             <div id="targetOverlay">
               <div class="overlayBase"></div>
-              <!-- windows injected here -->
             </div>
             <input type="range" id="progress-slider" min="0" max="1" step="0.001" value="0"
               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400">
@@ -239,30 +264,32 @@
         </div>
 
         <div class="text-[11px] text-slate-300 text-center leading-snug">
-          <span class="font-bold text-white">Educational hint:</span>
-          The green window shows the target phase range (arcade aid). Real hilal decisions depend on atmosphere, optics, and authority.
+          <span class="font-bold text-white">Tip:</span> Use the slider to set phase (Mission 1), bearing (Mission 2), or answer choices (Mission 3).
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // =========================
-    // 0) Sound FX (WebAudio)
-    // =========================
-    let soundEnabled = true;
+    // ============================================================
+    // A) Audio: SFX + Music (WebAudio, no files)
+    // ============================================================
+    let sfxEnabled = true;
+    let musicEnabled = false;
     let audioCtx = null;
 
+    // Music nodes
+    let musicGain = null, musicOsc1 = null, musicOsc2 = null, musicFilter = null, musicLFO = null, musicLFODepth = null;
+
     function ensureAudio() {
-      if (!soundEnabled) return null;
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === "suspended") audioCtx.resume();
       return audioCtx;
     }
 
     function tone(freq=440, type="sine", dur=0.08, gain=0.06) {
+      if (!sfxEnabled) return;
       const ctx = ensureAudio();
-      if (!ctx) return;
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
 
@@ -288,11 +315,129 @@
       level: () => { tone(440,"sine",0.09,0.06); setTimeout(()=>tone(660,"sine",0.10,0.06), 95); setTimeout(()=>tone(880,"sine",0.12,0.06), 210); }
     };
 
+    function startMusic() {
+      const ctx = ensureAudio();
+      if (musicGain) return;
+
+      musicGain = ctx.createGain();
+      musicGain.gain.value = 0.0; // fade in
+      musicGain.connect(ctx.destination);
+
+      // Gentle lowpass filter
+      musicFilter = ctx.createBiquadFilter();
+      musicFilter.type = "lowpass";
+      musicFilter.frequency.value = 650;
+      musicFilter.Q.value = 0.6;
+      musicFilter.connect(musicGain);
+
+      // Two detuned oscillators
+      musicOsc1 = ctx.createOscillator();
+      musicOsc2 = ctx.createOscillator();
+      musicOsc1.type = "sine";
+      musicOsc2.type = "sine";
+      musicOsc1.frequency.value = 196; // G3-ish
+      musicOsc2.frequency.value = 196 * 1.005;
+
+      // LFO for slow filter movement
+      musicLFO = ctx.createOscillator();
+      musicLFO.type = "sine";
+      musicLFO.frequency.value = 0.12;
+
+      musicLFODepth = ctx.createGain();
+      musicLFODepth.gain.value = 240;
+
+      musicLFO.connect(musicLFODepth);
+      musicLFODepth.connect(musicFilter.frequency);
+
+      musicOsc1.connect(musicFilter);
+      musicOsc2.connect(musicFilter);
+
+      musicOsc1.start();
+      musicOsc2.start();
+      musicLFO.start();
+
+      // Fade in
+      const t = ctx.currentTime;
+      musicGain.gain.setValueAtTime(0.0001, t);
+      musicGain.gain.exponentialRampToValueAtTime(0.06, t + 1.2);
+    }
+
+    function stopMusic() {
+      if (!audioCtx || !musicGain) return;
+      const ctx = audioCtx;
+      const t = ctx.currentTime;
+
+      // Fade out
+      musicGain.gain.setValueAtTime(Math.max(musicGain.gain.value, 0.0001), t);
+      musicGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+
+      setTimeout(() => {
+        try {
+          musicOsc1?.stop(); musicOsc2?.stop(); musicLFO?.stop();
+        } catch {}
+        musicOsc1 = musicOsc2 = musicLFO = null;
+        musicFilter?.disconnect(); musicGain?.disconnect();
+        musicFilter = musicGain = null;
+      }, 650);
+    }
+
     window.addEventListener("pointerdown", () => ensureAudio(), { once:true });
 
-    // =========================
-    // 1) Procedural textures
-    // =========================
+    // ============================================================
+    // B) Particles (2D overlay canvas)
+    // ============================================================
+    const fxCanvas = document.getElementById("fx");
+    const fxCtx = fxCanvas.getContext("2d");
+    let particles = [];
+
+    function resizeFx(){
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    resizeFx();
+
+    function burst(x, y, color="rgba(16,185,129,1)", count=26){
+      for(let i=0;i<count;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = 2.0 + Math.random()*5.5;
+        particles.push({
+          x, y,
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp,
+          life: 1.0,
+          r: 2 + Math.random()*3,
+          color
+        });
+      }
+    }
+
+    function updateParticles(){
+      fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+      const dt = 1/60;
+      particles = particles.filter(p => p.life > 0.02);
+
+      for(const p of particles){
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.vy += 0.18; // gravity
+        p.life *= 0.92;
+
+        fxCtx.globalAlpha = Math.min(1, p.life);
+        fxCtx.fillStyle = p.color;
+        fxCtx.beginPath();
+        fxCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        fxCtx.fill();
+      }
+      fxCtx.globalAlpha = 1;
+      requestAnimationFrame(updateParticles);
+    }
+    updateParticles();
+
+    // ============================================================
+    // C) Three.js scene
+    // ============================================================
     function createPlanetTexture(color1, color2, noiseScale) {
       const canvas = document.createElement('canvas');
       canvas.width = 512; canvas.height = 512;
@@ -306,7 +451,6 @@
         ctx.globalAlpha=Math.random()*0.5;
         ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
       }
-
       ctx.globalAlpha=1;
       ctx.strokeStyle="rgba(255,255,255,0.05)";
       ctx.lineWidth=1;
@@ -331,18 +475,13 @@
       return new THREE.CanvasTexture(canvas);
     }
 
-    // =========================
-    // 2) Three.js setup
-    // =========================
     let scene, camera, renderer, earth, moonMesh, sunLight, moonPivot, orbitLine, stars, sunMesh;
     let isPaused = true;
     let progress = 0; // 0..1
     let isEarthView = false;
 
-    // Arcade state
+    // Campaign state
     let gameMode = false;
-    let hilalOnly = false;
-    let targetPhaseIndex = 0;
     let score = 0;
     let streak = 0;
     let xp = 0;
@@ -352,23 +491,401 @@
     let timeLeft = roundTime;
     let lastTs = performance.now();
 
-    // Camera orbit
+    // Orbit camera
     const orbitCamPos = { x: 0, y: 15, z: 22 };
     let isDragging = false;
     let prev = { x: 0, y: 0 };
 
+    // ============================================================
+    // D) Missions
+    // ============================================================
+    const MISSION = { PHASE: 1, QIBLA: 2, HIGHLAT: 3 };
+    let currentMission = MISSION.PHASE;
+
+    // Mission 1: phases
+    let hilalOnly = false;
+    let targetPhaseIndex = 1;
+
     const phases = [
       { name: "New Moon",        range: [0.98, 0.02], edu: "Conjunction (ijtima’). The bright side faces away; usually not visible." },
-      { name: "Waxing Crescent", range: [0.02, 0.23], edu: "Early crescent. This is the critical window for hilal sighting (start of month)." },
+      { name: "Waxing Crescent", range: [0.02, 0.23], edu: "Early crescent (hilal window). Month start often depends on this." },
       { name: "First Quarter",   range: [0.23, 0.27], edu: "Half moon (waxing). The Moon is ~90° from the Sun." },
-      { name: "Waxing Gibbous",  range: [0.27, 0.48], edu: "More than half lit, increasing toward full." },
-      { name: "Full Moon",       range: [0.48, 0.52], edu: "Opposition: Earth between Sun and Moon; fully illuminated." },
-      { name: "Waning Gibbous",  range: [0.52, 0.73], edu: "Shrinking from full; light shifts to the left (in typical northern-hemisphere view)." },
+      { name: "Waxing Gibbous",  range: [0.27, 0.48], edu: "More than half lit; increasing toward full." },
+      { name: "Full Moon",       range: [0.48, 0.52], edu: "Opposition. Earth is between Sun and Moon." },
+      { name: "Waning Gibbous",  range: [0.52, 0.73], edu: "Shrinking from full; illumination decreases." },
       { name: "Last Quarter",    range: [0.73, 0.77], edu: "Half moon (waning)." },
       { name: "Waning Crescent", range: [0.77, 0.98], edu: "Final crescent before conjunction returns." }
     ];
 
-    const descriptions = phases.map(p => ({ t: p.name, d: p.edu }));
+    // Mission 2: Qibla Dash
+    const KAABA = { lat: 21.4225, lon: 39.8262 };
+    const cities = [
+      { name: "Kuala Lumpur", lat: 3.1390, lon: 101.6869 },
+      { name: "London", lat: 51.5074, lon: -0.1278 },
+      { name: "Tokyo", lat: 35.6762, lon: 139.6503 },
+      { name: "New York", lat: 40.7128, lon: -74.0060 },
+      { name: "Cape Town", lat: -33.9249, lon: 18.4241 }
+    ];
+    let qCity = cities[0];
+    let qTargetBearing = 0;   // degrees 0..360
+    let qTolerance = 10;      // degrees
+
+    // Mission 3: High-latitude quiz (multiple choice)
+    const hlQuestions = [
+      {
+        q: "A common approach in high latitudes is to use the prayer times of the nearest location where night/day is normal. This is called:",
+        choices: ["Nearest latitude (Aqrab al-Bilad)", "Local solar noon only", "Fixed Malaysia timetable", "Random interpolation"],
+        correct: 0,
+        explain: "Nearest-latitude/nearest-location methods are used when twilight behavior becomes abnormal."
+      },
+      {
+        q: "Which method estimates times by proportionally dividing the night based on a chosen twilight angle (e.g., 18°) even when it never reaches that angle?",
+        choices: ["Portion of night method", "Same as equator method", "Moon-phase method", "Nearest mosque method"],
+        correct: 0,
+        explain: "Portion-of-night methods allocate a fraction of the night for Isyak/Subuh."
+      },
+      {
+        q: "Why are high-latitude prayer times challenging in summer?",
+        choices: ["Twilight can persist all night", "The Moon disappears", "The Sun stops moving", "Qibla changes daily"],
+        correct: 0,
+        explain: "At high latitudes, the Sun may not go far enough below the horizon for true night/twilight definitions."
+      }
+    ];
+    let hlIndex = 0;
+    let hlChoice = 0;
+
+    // ============================================================
+    // E) UI helpers
+    // ============================================================
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+    function showFlash(color){
+      const f = document.getElementById("flash");
+      f.style.background = color;
+      f.style.opacity = "1";
+      setTimeout(()=>{ f.style.opacity = "0"; }, 120);
+    }
+
+    function showMessage(text, isError=false){
+      const el = document.getElementById('center-message');
+      const txt = document.getElementById('msg-text');
+      txt.innerText = text;
+      txt.style.borderColor = isError ? 'rgba(244,63,94,0.6)' : 'rgba(255,255,255,0.35)';
+      txt.style.background = isError ? 'rgba(60,0,10,0.78)' : 'rgba(15, 23, 42, 0.82)';
+      el.style.opacity = '1';
+      el.style.transform = 'translate(-50%, -50%) scale(1.08)';
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translate(-50%, -50%) scale(1)';
+      }, 900);
+    }
+
+    function levelFromXp(x){ return Math.floor(x/120) + 1; }
+
+    function addXp(delta){
+      const before = levelFromXp(xp);
+      xp += delta;
+      const after = levelFromXp(xp);
+      if(after > before){
+        sfx.level();
+        showFlash("rgba(99,102,241,0.35)");
+        // burst near center
+        burst(window.innerWidth/2, window.innerHeight/2, "rgba(99,102,241,1)", 34);
+        showMessage("LEVEL UP! +" + delta + " XP");
+      }
+    }
+
+    function updateTopStats(){
+      document.getElementById('score').innerText = "Score: " + score;
+      document.getElementById('streak').innerText = streak;
+      document.getElementById('xp').innerText = xp;
+      document.getElementById('level').innerText = levelFromXp(xp);
+    }
+
+    function updateTimerUI(){
+      const t = clamp(timeLeft/roundTime, 0, 1);
+      document.getElementById("timer").innerText = timeLeft.toFixed(1);
+      document.getElementById("timerbar").style.width = (t*100).toFixed(0) + "%";
+      document.getElementById("timerbar").style.background = t > 0.35 ? "rgba(16,185,129,0.7)" : "rgba(245,158,11,0.75)";
+    }
+
+    function setMissionUI(){
+      document.getElementById("missionTitle").textContent =
+        currentMission === MISSION.PHASE ? "Phase Hunter" :
+        currentMission === MISSION.QIBLA ? "Qibla Dash" :
+        "High-Lat Planner";
+
+      // Button labels
+      const action = document.getElementById("btn-action");
+      const mode = document.getElementById("btn-mode");
+
+      if(currentMission === MISSION.PHASE){
+        action.textContent = "Scan";
+        mode.textContent = hilalOnly ? "Hilal: ON" : "Hilal: OFF";
+      } else if(currentMission === MISSION.QIBLA){
+        action.textContent = "Lock Bearing";
+        mode.textContent = "Tolerance: ±" + qTolerance + "°";
+      } else {
+        action.textContent = "Submit";
+        mode.textContent = "Choice: " + (hlChoice+1);
+      }
+
+      // Mission body
+      const body = document.getElementById("missionBody");
+      body.innerHTML = "";
+
+      if(currentMission === MISSION.PHASE){
+        body.innerHTML = `
+          <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">How to play</div>
+          <div class="text-xs text-slate-300 leading-snug mb-2">
+            Move the slider into the highlighted window, then <b>Scan</b>. Bonus for perfect timing and streaks.
+          </div>
+          <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Target</div>
+          <div class="text-sm font-extrabold text-emerald-100">${document.getElementById("target-phase").textContent}</div>
+        `;
+      }
+
+      if(currentMission === MISSION.QIBLA){
+        body.innerHTML = `
+          <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">City</div>
+          <div class="text-sm font-extrabold text-white mb-2">${qCity.name}</div>
+          <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Task</div>
+          <div class="text-xs text-slate-300 leading-snug mb-2">
+            Use the slider as a compass (0°–360°). Set the bearing to Makkah, then <b>Lock Bearing</b>.
+          </div>
+          <div class="text-xs text-indigo-200 font-bold">
+            Your bearing: <span id="qUserBearing">0</span>°
+          </div>
+        `;
+      }
+
+      if(currentMission === MISSION.HIGHLAT){
+        const item = hlQuestions[hlIndex % hlQuestions.length];
+        body.innerHTML = `
+          <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Question</div>
+          <div class="text-xs text-slate-200 leading-snug mb-2">${item.q}</div>
+          <div class="grid grid-cols-1 gap-2">
+            ${item.choices.map((c,i)=>`
+              <button class="btn chip px-3 py-2 rounded-lg text-left text-xs hover:bg-white/10 hlChoice" data-i="${i}">
+                <span class="font-extrabold text-indigo-200 mr-2">${i+1}.</span>${c}
+              </button>
+            `).join("")}
+          </div>
+          <div class="mt-2 text-[11px] text-slate-300">
+            Selected: <b id="hlSelected">${hlChoice+1}</b>
+          </div>
+        `;
+
+        body.querySelectorAll(".hlChoice").forEach(btn=>{
+          btn.addEventListener("click", ()=>{
+            sfx.click();
+            hlChoice = parseInt(btn.getAttribute("data-i"), 10);
+            document.getElementById("hlSelected").textContent = (hlChoice+1);
+            setMissionUI();
+          });
+        });
+      }
+
+      // Update mission selector visuals
+      document.querySelectorAll(".missionCard").forEach(el=>el.classList.remove("missionActive"));
+      document.getElementById("m"+currentMission).classList.add("missionActive");
+    }
+
+    // ============================================================
+    // F) Phase mission helpers (overlay + hit test)
+    // ============================================================
+    function inTarget(p, target){
+      if(target.name === "New Moon"){
+        return (p > target.range[0] || p < target.range[1]);
+      }
+      return (p >= target.range[0] && p <= target.range[1]);
+    }
+
+    function proximityToTarget(p, target){
+      if(target.name === "New Moon"){
+        const d1 = Math.min(Math.abs(p - target.range[0]), Math.abs((p+1) - target.range[0]), Math.abs((p-1) - target.range[0]));
+        const d2 = Math.min(Math.abs(p - target.range[1]), Math.abs((p+1) - target.range[1]), Math.abs((p-1) - target.range[1]));
+        return Math.min(d1, d2);
+      }
+      if(p < target.range[0]) return target.range[0] - p;
+      if(p > target.range[1]) return p - target.range[1];
+      return 0;
+    }
+
+    function targetWindowsAsSegments(target){
+      if(target.name === "New Moon"){
+        return [
+          { l: target.range[0], w: 1 - target.range[0] },
+          { l: 0, w: target.range[1] }
+        ];
+      }
+      return [{ l: target.range[0], w: target.range[1]-target.range[0] }];
+    }
+
+    function expandTarget(target, margin){
+      if(target.name === "New Moon"){
+        return { name: target.name, range: [clamp(target.range[0]-margin,0,1), clamp(target.range[1]+margin,0,1)] };
+      }
+      return { name: target.name, range: [clamp(target.range[0]-margin,0,1), clamp(target.range[1]+margin,0,1)] };
+    }
+
+    function rebuildOverlay(){
+      const overlay = document.getElementById("targetOverlay");
+      overlay.querySelectorAll(".overlayWindow").forEach(n=>n.remove());
+
+      if(!gameMode || currentMission !== MISSION.PHASE) return;
+
+      const target = phases[targetPhaseIndex];
+      const windows = targetWindowsAsSegments(target);
+      windows.forEach(seg=>{
+        const div=document.createElement("div");
+        div.className="overlayWindow";
+        div.style.left = (seg.l*100) + "%";
+        div.style.width = (seg.w*100) + "%";
+        overlay.appendChild(div);
+      });
+
+      // Warm hint window
+      const warm = expandTarget(target, 0.04);
+      targetWindowsAsSegments(warm).forEach(seg=>{
+        const div=document.createElement("div");
+        div.className="overlayWindow warn";
+        div.style.left = (seg.l*100) + "%";
+        div.style.width = (seg.w*100) + "%";
+        overlay.appendChild(div);
+      });
+    }
+
+    // ============================================================
+    // G) Qibla bearing
+    // ============================================================
+    function deg2rad(d){ return d * Math.PI/180; }
+    function rad2deg(r){ return r * 180/Math.PI; }
+
+    // Initial bearing from point1 to point2 (great-circle)
+    function initialBearing(lat1, lon1, lat2, lon2){
+      const φ1 = deg2rad(lat1), φ2 = deg2rad(lat2);
+      const Δλ = deg2rad(lon2 - lon1);
+      const y = Math.sin(Δλ) * Math.cos(φ2);
+      const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+      const θ = Math.atan2(y, x);
+      return (rad2deg(θ) + 360) % 360;
+    }
+
+    function angleDiff(a, b){
+      // smallest difference between bearings
+      let d = Math.abs(a - b) % 360;
+      if(d > 180) d = 360 - d;
+      return d;
+    }
+
+    function nextQiblaRound(){
+      qCity = cities[Math.floor(Math.random()*cities.length)];
+      qTargetBearing = initialBearing(qCity.lat, qCity.lon, KAABA.lat, KAABA.lon);
+      // Use slider as 0..360
+      progress = Math.random(); // still drives 3D but okay
+      setTargetText();
+      setMissionUI();
+    }
+
+    // ============================================================
+    // H) High-lat quiz
+    // ============================================================
+    function nextHighLatRound(){
+      hlIndex = (hlIndex + 1) % hlQuestions.length;
+      hlChoice = 0;
+      setTargetText();
+      setMissionUI();
+    }
+
+    // ============================================================
+    // I) Campaign rounds + scoring
+    // ============================================================
+    function setTargetText(){
+      if(currentMission === MISSION.PHASE){
+        const idx = hilalOnly ? 1 : Math.floor(Math.random()*phases.length);
+        targetPhaseIndex = idx;
+        document.getElementById("target-phase").textContent = "Target: " + phases[targetPhaseIndex].name;
+        rebuildOverlay();
+      }
+      if(currentMission === MISSION.QIBLA){
+        document.getElementById("target-phase").textContent = "Target: Qibla Bearing";
+      }
+      if(currentMission === MISSION.HIGHLAT){
+        document.getElementById("target-phase").textContent = "Target: Correct Method";
+      }
+    }
+
+    function perfectBonus(dist){ return dist < 0.005 ? 60 : 0; }
+
+    function onCorrect(points, fxColor="rgba(16,185,129,1)"){
+      score += points;
+      streak += 1;
+      addXp(12 + Math.min(8, streak));
+
+      sfx.ok();
+      showFlash("rgba(16,185,129,0.28)");
+
+      // Burst near center message area
+      burst(window.innerWidth/2, window.innerHeight/2, fxColor, 36);
+
+      updateTopStats();
+    }
+
+    function onWrong(msg="Miss!"){
+      streak = 0;
+      sfx.bad();
+      showFlash("rgba(244,63,94,0.22)");
+      burst(window.innerWidth/2, window.innerHeight/2, "rgba(244,63,94,1)", 22);
+      showMessage(msg, true);
+      updateTopStats();
+    }
+
+    function nextRound(){
+      timeLeft = roundTime;
+
+      if(currentMission === MISSION.PHASE){
+        // randomize starting position
+        progress = Math.random();
+        setTargetText();
+        setMissionUI();
+      }
+      if(currentMission === MISSION.QIBLA){
+        nextQiblaRound();
+      }
+      if(currentMission === MISSION.HIGHLAT){
+        nextHighLatRound();
+      }
+    }
+
+    // ============================================================
+    // J) Update / animate
+    // ============================================================
+    function phaseFromProgress(p){
+      return Math.floor(p * 8) % 8;
+    }
+
+    function updatePhasePanels(){
+      const pIndex = phaseFromProgress(progress);
+      const current = phases[pIndex];
+
+      document.getElementById('progress-slider').value = progress;
+      const cycleDay = (progress * 29.5) + 1;
+      document.getElementById('cycle-day').innerText = cycleDay.toFixed(1);
+
+      document.getElementById('phase-badge').innerText = current.name;
+      document.getElementById('detail-title').innerText = current.name;
+      document.getElementById('detail-desc').innerText = current.edu;
+      document.getElementById('edu-mini').innerText = current.edu;
+
+      if(!isPaused) {
+        document.getElementById('icon-play').classList.add('hidden');
+        document.getElementById('icon-pause').classList.remove('hidden');
+      } else {
+        document.getElementById('icon-play').classList.remove('hidden');
+        document.getElementById('icon-pause').classList.add('hidden');
+      }
+    }
 
     function init() {
       scene = new THREE.Scene();
@@ -382,7 +899,6 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.body.appendChild(renderer.domElement);
 
-      // Earth
       const earthTex = createPlanetTexture('#1e3a8a', '#60a5fa', 20);
       const earthMat = new THREE.MeshStandardMaterial({
         map: earthTex, roughness: 0.6, metalness: 0.1, emissive: 0x112244, emissiveIntensity: 0.25
@@ -392,7 +908,6 @@
       earth.receiveShadow = true;
       scene.add(earth);
 
-      // Moon pivot
       moonPivot = new THREE.Object3D();
       scene.add(moonPivot);
 
@@ -404,7 +919,6 @@
       moonMesh.receiveShadow = true;
       moonPivot.add(moonMesh);
 
-      // Orbit line
       const orbitCurve = new THREE.EllipseCurve(0, 0, 10, 10, 0, 2*Math.PI, false, 0);
       const pts = orbitCurve.getPoints(120);
       const orbitGeom = new THREE.BufferGeometry().setFromPoints(pts);
@@ -413,7 +927,6 @@
       orbitLine.rotation.x = Math.PI/2;
       scene.add(orbitLine);
 
-      // Sun
       const sunPos = new THREE.Vector3(30, 5, 20);
       sunLight = new THREE.DirectionalLight(0xffffff, 1.45);
       sunLight.position.copy(sunPos);
@@ -443,14 +956,7 @@
 
       scene.add(new THREE.AmbientLight(0x404040, 0.2));
 
-      createStars();
-      updateCameraPosition();
-      updateUI();
-      rebuildOverlay();
-      animate();
-    }
-
-    function createStars() {
+      // Stars
       const g = new THREE.BufferGeometry();
       const pos = [];
       for(let i=0;i<5000;i++){
@@ -464,208 +970,40 @@
       const m = new THREE.PointsMaterial({ color:0xffffff, size:0.3, transparent:true, opacity:0.85 });
       stars = new THREE.Points(g, m);
       scene.add(stars);
+
+      // Camera
+      camera.position.set(orbitCamPos.x, orbitCamPos.y, orbitCamPos.z);
+      camera.lookAt(0,0,0);
+
+      // UI init
+      setTargetText();
+      setMissionUI();
+      updateTopStats();
+      updatePhasePanels();
+
+      animate();
     }
 
-    function updateCameraPosition() {
-      if (!isEarthView) {
-        camera.position.set(orbitCamPos.x, orbitCamPos.y, orbitCamPos.z);
-        camera.lookAt(0,0,0);
-      }
-    }
-
-    // =========================
-    // 3) UI / Education
-    // =========================
-    function phaseFromProgress(p){
-      const idx = Math.floor(p * 8) % 8;
-      return idx;
-    }
-
-    function updateUI() {
-      document.getElementById('progress-slider').value = progress;
-      const cycleDay = (progress * 29.5) + 1;
-      document.getElementById('cycle-day').innerText = cycleDay.toFixed(1);
-
-      const pIndex = phaseFromProgress(progress);
-      const current = descriptions[pIndex];
-
-      document.getElementById('phase-badge').innerText = current.t;
-      document.getElementById('detail-title').innerText = current.t;
-      document.getElementById('detail-desc').innerText = current.d;
-      document.getElementById('edu-mini').innerText = current.d;
-
-      if(!isPaused) {
-        document.getElementById('icon-play').classList.add('hidden');
-        document.getElementById('icon-pause').classList.remove('hidden');
-      } else {
-        document.getElementById('icon-play').classList.remove('hidden');
-        document.getElementById('icon-pause').classList.add('hidden');
-      }
-
-      document.getElementById('score').innerText = "Score: " + score;
-      document.getElementById('streak').innerText = streak;
-      document.getElementById('xp').innerText = xp;
-      document.getElementById('level').innerText = levelFromXp(xp);
-
-      if(gameMode){
-        updateCloseness();
-        updateTimerUI();
-      }
-    }
-
-    // Overlay shows target window(s)
-    function rebuildOverlay(){
-      const overlay = document.getElementById("targetOverlay");
-      overlay.querySelectorAll(".overlayWindow").forEach(n=>n.remove());
-
-      if(!gameMode){
-        // show standard "education" windows for key phases (optional)
-        // keep minimal in normal mode: show nothing but base.
-        return;
-      }
-
-      const target = phases[targetPhaseIndex];
-      // target window style: green; near window style: amber
-      const windows = targetWindowsAsSegments(target);
-
-      windows.forEach(seg=>{
-        const div=document.createElement("div");
-        div.className="overlayWindow";
-        div.style.left = (seg.l*100) + "%";
-        div.style.width = (seg.w*100) + "%";
-        overlay.appendChild(div);
-      });
-
-      // Add a wider "warm" hint window (+/- 0.04) to teach proximity
-      const warm = expandTarget(target, 0.04);
-      const warmSegs = targetWindowsAsSegments(warm);
-      warmSegs.forEach(seg=>{
-        const div=document.createElement("div");
-        div.className="overlayWindow warn";
-        div.style.left = (seg.l*100) + "%";
-        div.style.width = (seg.w*100) + "%";
-        overlay.appendChild(div);
-      });
-    }
-
-    function targetWindowsAsSegments(target){
-      // handle wrapping (New Moon)
-      if(target.name === "New Moon"){
-        // [0.98..1] and [0..0.02]
-        return [
-          { l: target.range[0], w: 1 - target.range[0] },
-          { l: 0, w: target.range[1] }
-        ];
-      }
-      return [{ l: target.range[0], w: target.range[1]-target.range[0] }];
-    }
-
-    function expandTarget(target, margin){
-      // returns a new "virtual target" expanded by margin (wrap-safe)
-      if(target.name === "New Moon"){
-        return { name: target.name, range: [clamp(target.range[0]-margin,0,1), clamp(target.range[1]+margin,0,1)] };
-      }
-      return { name: target.name, range: [clamp(target.range[0]-margin,0,1), clamp(target.range[1]+margin,0,1)] };
-    }
-
-    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-
-    function inTarget(p, target){
-      if(target.name === "New Moon"){
-        return (p > target.range[0] || p < target.range[1]);
-      }
-      return (p >= target.range[0] && p <= target.range[1]);
-    }
-
-    function proximityToTarget(p, target){
-      // 0 = inside; higher = further away
-      if(target.name === "New Moon"){
-        // distance to either edge around wrap
-        const d1 = Math.min(Math.abs(p - target.range[0]), Math.abs((p+1) - target.range[0]), Math.abs((p-1) - target.range[0]));
-        const d2 = Math.min(Math.abs(p - target.range[1]), Math.abs((p+1) - target.range[1]), Math.abs((p-1) - target.range[1]));
-        return Math.min(d1, d2);
-      }
-      if(p < target.range[0]) return target.range[0] - p;
-      if(p > target.range[1]) return p - target.range[1];
-      return 0;
-    }
-
-    function updateCloseness(){
-      const target = phases[targetPhaseIndex];
-      const dist = proximityToTarget(progress, target); // 0.. roughly 0.5
-      const close = clamp(1 - (dist / 0.12), 0, 1);     // 0..1
-      document.getElementById("closebar").style.width = (close*100).toFixed(0) + "%";
-
-      let text = "Move the slider to match the target window.";
-      if(dist === 0) text = "Inside target window ✅";
-      else if(dist < 0.02) text = "Very close!";
-      else if(dist < 0.06) text = "Close.";
-      else text = "Far.";
-
-      // Educational add-on
-      if(hilalOnly){
-        text += " (Hilal mode: focus on waxing crescent visibility window)";
-      }
-      document.getElementById("closeText").innerText = text;
-    }
-
-    // =========================
-    // 4) Arcade scoring (XP/Level)
-    // =========================
-    function levelFromXp(x){
-      return Math.floor(x/120) + 1;
-    }
-    function addXp(delta){
-      const before = levelFromXp(xp);
-      xp += delta;
-      const after = levelFromXp(xp);
-      if(after > before){
-        sfx.level();
-        showFlash("rgba(99,102,241,0.35)");
-        showMessage("LEVEL UP! +" + delta + " XP");
-      }
-    }
-
-    function showFlash(color){
-      const f = document.getElementById("flash");
-      f.style.background = color;
-      f.style.opacity = "1";
-      setTimeout(()=>{ f.style.opacity = "0"; }, 120);
-    }
-
-    function cameraKick(strength=0.25){
-      if(!isEarthView) return;
-      camera.position.x += (Math.random()-0.5)*strength;
-      camera.position.y += (Math.random()-0.5)*strength*0.6;
-      camera.position.z += (Math.random()-0.5)*strength;
-    }
-
-    // =========================
-    // 5) Main loop
-    // =========================
     function animate(ts=performance.now()){
       requestAnimationFrame(animate);
 
-      // normal playback only outside game
+      // Normal playback only outside campaign
       if (!isPaused && !gameMode) {
         progress += 0.0005;
         if (progress > 1) progress = 0;
       }
 
-      // timer during game
+      // Timer during campaign
       const dt = (ts - lastTs)/1000;
       lastTs = ts;
       if(gameMode){
         timeLeft -= dt;
         if(timeLeft <= 0){
-          // timeout: lose streak, next round
           timeLeft = 0;
-          streak = 0;
-          sfx.bad();
-          showFlash("rgba(244,63,94,0.25)");
-          showMessage("Time up! New target…", true);
-          setTimeout(nextRound, 650);
+          onWrong("Time up! Next round…");
+          setTimeout(nextRound, 700);
         }
+        updateTimerUI();
       }
 
       const angle = progress * Math.PI * 2;
@@ -674,7 +1012,6 @@
       moonMesh.rotation.y = angle;
 
       if(isEarthView){
-        // Camera placed outside Earth, looking at Moon from near Earth
         camera.position.set(0, 2.2, 4.6);
         const moonWorldPos = new THREE.Vector3();
         moonMesh.getWorldPosition(moonWorldPos);
@@ -684,37 +1021,44 @@
       }
 
       renderer.render(scene, camera);
-      updateUI();
+      updatePhasePanels();
+
+      // Mission-specific live UI
+      if(gameMode && currentMission === MISSION.QIBLA){
+        const userBearing = Math.round(progress * 360);
+        const el = document.getElementById("qUserBearing");
+        if(el) el.textContent = userBearing;
+      }
     }
 
-    function updateTimerUI(){
-      const t = clamp(timeLeft/roundTime, 0, 1);
-      document.getElementById("timer").innerText = timeLeft.toFixed(1);
-      document.getElementById("timerbar").style.width = (t*100).toFixed(0) + "%";
-      document.getElementById("timerbar").style.background = t > 0.35 ? "rgba(16,185,129,0.7)" : "rgba(245,158,11,0.75)";
-    }
-
-    // =========================
-    // 6) Controls
-    // =========================
+    // ============================================================
+    // K) Controls
+    // ============================================================
     document.getElementById('btn-sound').addEventListener('click', () => {
-      soundEnabled = !soundEnabled;
-      document.getElementById('btn-sound').innerText = (soundEnabled ? "🔊 Sound: ON" : "🔇 Sound: OFF");
       sfx.click();
+      sfxEnabled = !sfxEnabled;
+      document.getElementById('btn-sound').textContent = sfxEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
+    });
+
+    document.getElementById('btn-music').addEventListener('click', () => {
+      sfx.click();
+      musicEnabled = !musicEnabled;
+      document.getElementById('btn-music').textContent = musicEnabled ? "🎵 Music: ON" : "🎵 Music: OFF";
+      if(musicEnabled) startMusic(); else stopMusic();
     });
 
     document.getElementById('btn-view').addEventListener('click', () => {
       sfx.click();
       isEarthView = !isEarthView;
-      const btn = document.getElementById('btn-view');
       const badge = document.getElementById('view-badge');
       const desc = document.getElementById('mode-desc');
+      const btn = document.getElementById('btn-view');
 
       if(isEarthView){
         btn.textContent = "Switch to Orbit";
         badge.textContent = "Earth View";
         badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-900 text-emerald-200 border border-emerald-700 uppercase tracking-wider";
-        desc.textContent = "Earth View: phases as seen by an observer on/near Earth (educational).";
+        desc.textContent = "Earth View: phases as an observer would see them (great for learning hilal visibility).";
         showMessage("Earth View activated.");
       } else {
         btn.innerHTML = `
@@ -726,22 +1070,18 @@
         `;
         badge.textContent = "Orbit View";
         badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-900 text-indigo-200 border border-indigo-700 uppercase tracking-wider";
-        desc.textContent = "Orbit View: drag to rotate. Useful to understand geometry Sun–Earth–Moon.";
-        updateCameraPosition();
+        desc.textContent = "Orbit View: drag to rotate. Understand Sun–Earth–Moon geometry.";
       }
     });
 
     document.getElementById('btn-play').addEventListener('click', () => {
       sfx.click();
       isPaused = !isPaused;
-      updateUI();
     });
 
     document.getElementById('progress-slider').addEventListener('input', (e) => {
       isPaused = true;
       progress = parseFloat(e.target.value);
-      updateUI();
-      if(gameMode) updateCloseness();
     });
 
     document.querySelectorAll('.phase-jump').forEach(el => {
@@ -749,142 +1089,10 @@
         sfx.click();
         isPaused = true;
         progress = parseFloat(el.getAttribute('data-p'));
-        updateUI();
-        if(gameMode) updateCloseness();
       });
     });
 
-    // Arcade Mission
-    document.getElementById('btn-game').addEventListener('click', () => {
-      sfx.click();
-      startGame();
-    });
-    document.getElementById('btn-exit-game').addEventListener('click', () => {
-      sfx.click();
-      stopGame();
-    });
-    document.getElementById('btn-scan').addEventListener('click', () => {
-      sfx.scan();
-      checkGameTarget();
-    });
-    document.getElementById('btn-hilal').addEventListener('click', () => {
-      sfx.click();
-      hilalOnly = !hilalOnly;
-      showMessage(hilalOnly ? "Hilal Mode: Waxing Crescent targets" : "Full Cycle Mode: Any phase targets");
-      nextRound();
-    });
-
-    function startGame(){
-      gameMode = true;
-      isPaused = true;
-      score = 0;
-      streak = 0;
-      document.body.classList.add('game-active');
-      document.getElementById('btn-exit-game').classList.remove('hidden');
-
-      if(!isEarthView) document.getElementById('btn-view').click(); // force Earth view for play
-
-      nextRound();
-    }
-
-    function stopGame(){
-      gameMode = false;
-      document.body.classList.remove('game-active');
-      document.getElementById('btn-exit-game').classList.add('hidden');
-      document.getElementById('score').innerText = "Score: 0";
-      rebuildOverlay();
-    }
-
-    function nextRound(){
-      timeLeft = roundTime;
-
-      if(hilalOnly){
-        // Only waxing crescent (index 1) + optionally very early window
-        targetPhaseIndex = 1;
-      } else {
-        targetPhaseIndex = Math.floor(Math.random() * phases.length);
-      }
-
-      const targetName = phases[targetPhaseIndex].name;
-      document.getElementById('target-phase').innerText = "Find: " + targetName;
-
-      // Randomize starting position (not inside target too often)
-      progress = Math.random();
-      rebuildOverlay();
-      updateUI();
-      updateCloseness();
-    }
-
-    function checkGameTarget(){
-      const target = phases[targetPhaseIndex];
-      const p = progress;
-
-      const hit = inTarget(p, target);
-      const dist = proximityToTarget(p, target);
-
-      if(hit){
-        // timing bonus: more time left -> more points
-        const timeBonus = Math.round(20 * (timeLeft/roundTime));
-        const perfect = (dist < 0.005);
-
-        const base = 100;
-        const streakBonus = Math.min(80, streak * 10);
-        const perfectBonus = perfect ? 60 : 0;
-
-        const gained = base + timeBonus + streakBonus + perfectBonus;
-        score += gained;
-        streak += 1;
-
-        addXp(12 + Math.min(8, streak)); // XP escalates a bit with streak
-
-        sfx.ok();
-        showFlash("rgba(16,185,129,0.28)");
-        cameraKick(0.35);
-
-        showMessage(
-          (perfect ? "PERFECT! " : "Correct! ")
-          + `+${gained} pts`
-          + (timeBonus ? ` (+${timeBonus} time)` : "")
-          + (streakBonus ? ` (+${streakBonus} streak)` : ""),
-          false
-        );
-
-        setTimeout(nextRound, 800);
-      } else {
-        streak = 0;
-        sfx.bad();
-        showFlash("rgba(244,63,94,0.22)");
-        cameraKick(0.18);
-
-        let hint = "Keep adjusting!";
-        if(dist < 0.02) hint = "Very close!";
-        else if(dist < 0.06) hint = "Close.";
-        else hint = "Far.";
-
-        showMessage(`Miss. ${hint}`, true);
-      }
-
-      updateUI();
-      updateCloseness();
-    }
-
-    function showMessage(text, isError=false){
-      const el = document.getElementById('center-message');
-      const txt = document.getElementById('msg-text');
-      txt.innerText = text;
-      txt.style.borderColor = isError ? 'rgba(244,63,94,0.6)' : 'rgba(255,255,255,0.35)';
-      txt.style.background = isError ? 'rgba(60,0,10,0.78)' : 'rgba(15, 23, 42, 0.82)';
-      el.style.opacity = '1';
-      el.style.transform = 'translate(-50%, -50%) scale(1.08)';
-      setTimeout(() => {
-        el.style.opacity = '0';
-        el.style.transform = 'translate(-50%, -50%) scale(1)';
-      }, 900);
-    }
-
-    // =========================
-    // 7) Orbit drag (Orbit view)
-    // =========================
+    // Orbit drag (Orbit view)
     window.addEventListener('mousedown', (e) => {
       isDragging = true;
       prev = { x: e.clientX, y: e.clientY };
@@ -897,19 +1105,135 @@
       const dx = e.clientX - prev.x;
       const dy = e.clientY - prev.y;
 
-      // rotate around Y-axis
       const theta = dx * 0.01;
-
       const x = camera.position.x;
       const z = camera.position.z;
 
       camera.position.x = x * Math.cos(theta) - z * Math.sin(theta);
       camera.position.z = x * Math.sin(theta) + z * Math.cos(theta);
-
       camera.position.y = clamp(camera.position.y - dy * 0.06, 4, 35);
 
       camera.lookAt(0,0,0);
       prev = { x: e.clientX, y: e.clientY };
+    });
+
+    // Mission switching (top cards)
+    document.getElementById("m1").addEventListener("click", ()=>{ sfx.click(); currentMission = MISSION.PHASE; setMissionUI(); setTargetText(); rebuildOverlay(); });
+    document.getElementById("m2").addEventListener("click", ()=>{ sfx.click(); currentMission = MISSION.QIBLA; setMissionUI(); nextQiblaRound(); });
+    document.getElementById("m3").addEventListener("click", ()=>{ sfx.click(); currentMission = MISSION.HIGHLAT; setMissionUI(); nextHighLatRound(); });
+
+    // Campaign start/exit
+    document.getElementById('btn-game').addEventListener('click', () => {
+      sfx.click();
+      gameMode = true;
+      isPaused = true;
+      score = 0; streak = 0;
+      document.body.classList.add('game-active');
+      document.getElementById('btn-exit-game').classList.remove('hidden');
+
+      // Earth view for gameplay clarity
+      if(!isEarthView) document.getElementById('btn-view').click();
+
+      timeLeft = roundTime;
+      updateTopStats();
+      nextRound();
+      showMessage("Campaign started!");
+    });
+
+    document.getElementById('btn-exit-game').addEventListener('click', () => {
+      sfx.click();
+      gameMode = false;
+      document.body.classList.remove('game-active');
+      document.getElementById('btn-exit-game').classList.add('hidden');
+      rebuildOverlay();
+      showMessage("Campaign ended.");
+    });
+
+    // Mission action + mode
+    document.getElementById("btn-mode").addEventListener("click", ()=>{
+      sfx.click();
+      if(currentMission === MISSION.PHASE){
+        hilalOnly = !hilalOnly;
+        setMissionUI();
+        nextRound();
+        showMessage(hilalOnly ? "Hilal Mode ON" : "Hilal Mode OFF");
+      } else if(currentMission === MISSION.QIBLA){
+        // cycle tolerance
+        qTolerance = (qTolerance === 10) ? 7 : (qTolerance === 7) ? 5 : 10;
+        setMissionUI();
+        showMessage("Tolerance set to ±" + qTolerance + "°");
+      } else {
+        // cycle choice quickly
+        hlChoice = (hlChoice + 1) % hlQuestions[hlIndex % hlQuestions.length].choices.length;
+        setMissionUI();
+      }
+    });
+
+    document.getElementById("btn-action").addEventListener("click", ()=>{
+      if(!gameMode){
+        showMessage("Start Campaign first.", true);
+        return;
+      }
+
+      if(currentMission === MISSION.PHASE){
+        sfx.scan();
+        const target = phases[targetPhaseIndex];
+        const hit = inTarget(progress, target);
+        const dist = proximityToTarget(progress, target);
+
+        if(hit){
+          const timeBonus = Math.round(20 * (timeLeft/roundTime));
+          const streakBonus = Math.min(80, streak * 10);
+          const pBonus = perfectBonus(dist);
+          const gained = 100 + timeBonus + streakBonus + pBonus;
+
+          onCorrect(gained, "rgba(16,185,129,1)");
+          showMessage((pBonus ? "PERFECT! " : "Correct! ") + `+${gained} pts`);
+          setTimeout(nextRound, 900);
+        } else {
+          let hint = dist < 0.02 ? "Very close!" : dist < 0.06 ? "Close." : "Far.";
+          onWrong("Miss. " + hint);
+        }
+      }
+
+      if(currentMission === MISSION.QIBLA){
+        sfx.scan();
+        const userBearing = Math.round(progress * 360);
+        const d = angleDiff(userBearing, qTargetBearing);
+
+        if(d <= qTolerance){
+          const timeBonus = Math.round(25 * (timeLeft/roundTime));
+          const streakBonus = Math.min(80, streak * 10);
+          const gained = 120 + timeBonus + streakBonus;
+
+          onCorrect(gained, "rgba(99,102,241,1)");
+          showMessage(`Locked! Δ${d.toFixed(1)}° (+${gained} pts)`);
+          setTimeout(nextRound, 900);
+        } else {
+          onWrong(`Off by ${d.toFixed(1)}°. Try again!`);
+        }
+      }
+
+      if(currentMission === MISSION.HIGHLAT){
+        sfx.scan();
+        const item = hlQuestions[hlIndex % hlQuestions.length];
+        if(hlChoice === item.correct){
+          const timeBonus = Math.round(18 * (timeLeft/roundTime));
+          const streakBonus = Math.min(60, streak * 8);
+          const gained = 110 + timeBonus + streakBonus;
+
+          onCorrect(gained, "rgba(245,158,11,1)");
+          showMessage(`Correct! +${gained} pts`);
+          setTimeout(()=>{
+            showMessage(item.explain);
+            setTimeout(nextRound, 900);
+          }, 700);
+        } else {
+          onWrong("Not quite. " + item.explain);
+        }
+      }
+
+      setMissionUI();
     });
 
     // Resize
@@ -917,9 +1241,9 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      resizeFx();
     });
 
-    // Boot
     window.onload = init;
   </script>
 </body>
